@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>台大兒童轉運外接 · 出勤系統</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f7f5f2;
+    --surface: #ffffff;
+    --surface2: #f0ede8;
+    --border: #e2ddd6;
+    --text: #2c2825;
+    --text-muted: #9a9189;
+    --text-light: #c4bfb8;
+    --accent: #4a6741;
+    --accent-light: #edf2ec;
+    --warn: #b85c1a;
+    --warn-light: #fef3ec;
+    --info: #1a5a8a;
+    --info-light: #edf4fb;
+    --tag-bg: #ede9e3;
+    --mono: 'DM Mono', monospace;
+    --sans: 'Noto Sans TC', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    font-family: var(--sans);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-mark {
+    width: 32px;
+    height: 32px;
+    background: var(--text);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .logo-mark svg { color: white; }
+
+  .header-title {
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--text);
+  }
+
+  .header-subtitle {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 300;
+    letter-spacing: 0.04em;
+  }
+
+  .clock {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+  }
+
+  /* ── Layout ── */
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 28px 24px;
+  }
+
+  /* ── Search ── */
+  .search-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+  }
+
+  .search-label {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 400;
+    margin-bottom: 10px;
+  }
+
+  .search-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .search-input-wrap {
+    flex: 1;
+    position: relative;
+  }
+
+  .search-input {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 10px 14px 10px 40px;
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--text-light); }
+
+  .search-icon {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+
+  .suggestions {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    z-index: 200;
+    max-height: 280px;
+    overflow-y: auto;
+    display: none;
+  }
+
+  .suggestions.open { display: block; }
+
+  .suggestion-item {
+    padding: 9px 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    transition: background 0.1s;
+    border-bottom: 1px solid var(--bg);
+  }
+
+  .suggestion-item:last-child { border-bottom: none; }
+  .suggestion-item:hover { background: var(--surface2); }
+
+  .suggestion-name {
+    font-size: 13px;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .suggestion-count {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    background: var(--tag-bg);
+    padding: 2px 7px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  .btn-primary {
+    background: var(--text);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-family: var(--sans);
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.2s;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+  }
+
+  .btn-primary:hover { opacity: 0.82; }
+
+  .btn-clear {
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: border-color 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-clear:hover { border-color: var(--text-muted); }
+
+  /* ── Results ── */
+  #result-area { display: none; }
+  #result-area.visible { display: block; }
+
+  .hospital-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 28px;
+    margin-bottom: 16px;
+    gap: 16px;
+  }
+
+  .hospital-name-area h2 {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.3;
+    margin-bottom: 6px;
+  }
+
+  .tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 4px;
+    background: var(--tag-bg);
+    color: var(--text-muted);
+    font-family: var(--mono);
+    letter-spacing: 0.02em;
+  }
+
+  .tag.accent { background: var(--accent-light); color: var(--accent); }
+  .tag.warn { background: var(--warn-light); color: var(--warn); }
+
+  .mission-count-box {
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .mission-count-num {
+    font-family: var(--mono);
+    font-size: 32px;
+    font-weight: 300;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 2px;
+  }
+
+  .mission-count-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+  }
+
+  /* ── Grid ── */
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 660px) {
+    .info-grid { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .card-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+
+  /* ── Phone records ── */
+  .phone-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .phone-record {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--bg);
+    border-radius: 7px;
+    transition: background 0.15s;
+  }
+
+  .phone-record:hover { background: var(--surface2); }
+
+  .phone-date {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    margin-top: 1px;
+    min-width: 72px;
+  }
+
+  .phone-details { flex: 1; min-width: 0; }
+
+  .phone-number {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 2px;
+    word-break: break-all;
+  }
+
+  .phone-contact {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .phone-unit {
+    font-size: 11px;
+    background: var(--tag-bg);
+    padding: 1px 7px;
+    border-radius: 3px;
+    color: var(--text-muted);
+    font-family: var(--mono);
+    white-space: nowrap;
+    align-self: flex-start;
+    margin-top: 1px;
+  }
+
+  /* ── Placeholder state ── */
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text-muted);
+  }
+
+  .empty-state svg {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 16px;
+    opacity: 0.25;
+  }
+
+  .empty-state p {
+    font-size: 13px;
+    font-weight: 300;
+  }
+
+  /* ── Stats bar ── */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .stat-cell {
+    background: var(--surface);
+    padding: 14px 18px;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 300;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  /* ── No result ── */
+  .no-result {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px 28px;
+    text-align: center;
+    color: var(--text-muted);
+  }
+
+  .no-result h3 {
+    font-size: 15px;
+    font-weight: 400;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+
+  .no-result p {
+    font-size: 13px;
+  }
+
+  /* ── Phase 2 placeholder cards ── */
+  .placeholder-card {
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .placeholder-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-light);
+    flex-shrink: 0;
+  }
+
+  .placeholder-text strong {
+    display: block;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .placeholder-text span {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .coming-soon {
+    font-size: 10px;
+    background: var(--tag-bg);
+    color: var(--text-muted);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .placeholder-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 660px) {
+    .placeholder-grid { grid-template-columns: 1fr; }
+    .stats-bar { grid-template-columns: repeat(2,1fr); }
+  }
+
+  /* ── Divider ── */
+  .section-divider {
+    margin: 24px 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-divider-label {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-light);
+    white-space: nowrap;
+  }
+
+  .section-divider hr {
+    flex: 1;
+    border: none;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── Highlight match ── */
+  mark {
+    background: #fde68a;
+    color: inherit;
+    border-radius: 2px;
+    padding: 0 1px;
+  }
+
+  /* ── Time stats block ── */
+  .time-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .time-stat-cell {
+    background: var(--surface);
+    padding: 18px 20px;
+  }
+
+  .time-stat-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    font-weight: 400;
+  }
+
+  .time-stat-value {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 300;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+
+  .time-stat-value span {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 300;
+  }
+
+  .time-stat-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .time-stat-cell.highlight {
+    background: var(--warn-light);
+  }
+
+  .time-stat-cell.highlight .time-stat-value {
+    color: var(--warn);
+  }
+
+  .time-stat-cell.highlight .time-stat-label {
+    color: var(--warn);
+    opacity: 0.8;
+  }
+
+  @media (max-width: 580px) {
+    .time-stats { grid-template-columns: 1fr; }
+  }
+
+
+  /* ── Live grid ── */
+  .live-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 700px) { .live-grid { grid-template-columns: 1fr; } }
+
+  /* ── Location ── */
+  .pulse-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--text-light);
+    flex-shrink: 0;
+  }
+  .pulse-dot.active {
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+  .pulse-dot.warn { background: var(--warn); }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(74,103,65,0.4); }
+    50% { box-shadow: 0 0 0 5px rgba(74,103,65,0); }
+  }
+
+  .location-device {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--bg);
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+  .location-device:last-child { margin-bottom: 0; }
+
+  .loc-badge {
+    font-size: 10px;
+    font-family: var(--mono);
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--tag-bg);
+    color: var(--text-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .loc-badge.out { background: var(--accent-light); color: var(--accent); }
+  .loc-badge.idle { background: var(--tag-bg); color: var(--text-muted); }
+
+  .loc-info { flex: 1; min-width: 0; }
+  .loc-name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+  .loc-address { font-size: 12px; color: var(--text-muted); margin-bottom: 2px; }
+  .loc-time { font-size: 11px; font-family: var(--mono); color: var(--text-light); }
+
+  .no-mission {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+  .location-loading { color: var(--text-muted); font-size: 13px; padding: 8px 0; }
+
+  /* ── Weather ── */
+  .weather-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .weather-icon { font-size: 24px; line-height: 1; }
+  .weather-main { font-size: 20px; font-family: var(--mono); font-weight: 300; color: var(--text); }
+  .weather-main span { font-size: 12px; color: var(--text-muted); }
+  .weather-desc { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+
+  /* ── Earthquake ── */
+  .quake-item {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--bg);
+    font-size: 12px;
+  }
+  .quake-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .quake-mag {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text);
+  }
+  .quake-mag.big { color: var(--warn); }
+  .quake-loc { color: var(--text-muted); margin-top: 1px; }
+  .quake-time { font-family: var(--mono); font-size: 10px; color: var(--text-light); margin-top: 1px; }
+  .quake-none { font-size: 13px; color: var(--accent); }
+
+  /* scrollbar */
+  .suggestions::-webkit-scrollbar { width: 5px; }
+  .suggestions::-webkit-scrollbar-track { background: transparent; }
+  .suggestions::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo-mark">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+      </svg>
+    </div>
+    <div>
+      <div class="header-title">台大兒童醫院 轉運外接系統</div>
+      <div class="header-subtitle">NTUCH Transport Team · Dashboard v1.0</div>
+    </div>
+  </div>
+  <div class="clock" id="clock">--:--:--</div>
+</header>
+
+<main>
+
+  <!-- Stats bar -->
+  <div class="stats-bar">
+    <div class="stat-cell">
+      <div class="stat-num">727</div>
+      <div class="stat-label">歷史任務</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-num">117</div>
+      <div class="stat-label">合作院所</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-num">14</div>
+      <div class="stat-label">縣市涵蓋</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-num">7</div>
+      <div class="stat-label">年資料庫</div>
+    </div>
+  </div>
+
+  <!-- Search -->
+  <div class="search-section">
+    <div class="search-label">輸入出勤院所名稱</div>
+    <div class="search-row">
+      <div class="search-input-wrap">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input
+          type="text"
+          class="search-input"
+          id="search-input"
+          placeholder="例：禾馨民權、花蓮慈濟、林口長庚…"
+          autocomplete="off"
+        />
+        <div class="suggestions" id="suggestions"></div>
+      </div>
+      <button class="btn-primary" onclick="doSearch()">查詢</button>
+      <button class="btn-clear" onclick="clearSearch()">清除</button>
+    </div>
+  </div>
+
+  <!-- Result area -->
+  <div id="result-area">
+    <div id="result-content"></div>
+
+    <!-- Live info section -->
+    <div class="section-divider">
+      <div class="section-divider-label">即時資訊</div>
+      <hr>
+    </div>
+
+    <!-- Location tracking -->
+    <div class="card location-card" style="margin-bottom:16px;">
+      <div class="card-header">
+        <div class="card-title">出勤手機定位</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <div class="pulse-dot" id="location-pulse"></div>
+          <span style="font-size:11px;color:var(--text-muted);" id="location-update-time">—</span>
+        </div>
+      </div>
+      <div id="location-status-area">
+        <div class="location-status" id="location-status-box">
+          <div class="location-loading">讀取定位中…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Map + travel time + weather + quake -->
+    <div class="live-grid" style="margin-bottom:16px;">
+      <div class="card" id="map-card">
+        <div class="card-header">
+          <div class="card-title">導航地圖</div>
+          <span id="travel-time-badge" style="font-size:11px;font-family:var(--mono);background:var(--accent-light);color:var(--accent);padding:2px 8px;border-radius:4px;display:none;"></span>
+        </div>
+        <div id="map-container" style="height:220px;background:var(--bg);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px;">
+          查詢院所後顯示地圖
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="card">
+          <div class="card-header"><div class="card-title">目的地天氣</div></div>
+          <div id="weather-content"><span style="color:var(--text-muted);font-size:13px;">查詢院所後顯示天氣</span></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">近48小時地震</div></div>
+          <div id="quake-content"><span style="color:var(--text-muted);font-size:13px;">載入中…</span></div>
+        </div>
+      </div>
+    </div>
+
+  <!-- Empty state (initial) -->
+  <div id="empty-state" class="card empty-state">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+    </svg>
+    <p>輸入院所名稱開始查詢<br>可查詢歷史來電電話、聯絡人及出勤紀錄</p>
+  </div>
+
+</main>
+
+<script>
+// ── Time Stats Database ──
+const TIME_DB = {"三軍總醫院附設民眾診療服務處":{"avg_go":16,"avg_stay":41,"max_stay":60,"max_stay_date":"2025-06-23"},"中國醫藥大學兒童醫院":{"avg_go":109,"avg_stay":43,"max_stay":52,"max_stay_date":"2024-11-24"},"中國醫藥大學新竹附設醫院":{"avg_go":56,"avg_stay":56,"max_stay":57,"max_stay_date":"2024-02-02"},"中國醫藥大學附設醫院":{"avg_go":85,"avg_stay":43,"max_stay":54,"max_stay_date":"2020-04-20"},"中山醫學大學附設醫院":{"avg_go":118,"avg_stay":51,"max_stay":61,"max_stay_date":"2021-01-21"},"中山醫療社團法人中山醫院":{"avg_go":8,"avg_stay":28,"max_stay":33,"max_stay_date":"2025-05-13"},"佛教慈濟醫療財團法人台中慈濟醫院":{"avg_go":99,"avg_stay":43,"max_stay":43,"max_stay_date":"2025-02-26"},"佛教慈濟醫療財團法人台北慈濟醫院":{"avg_go":12,"avg_stay":27,"max_stay":46,"max_stay_date":"2023-05-01"},"佛教慈濟醫療財團法人花蓮慈濟醫院":{"avg_go":98,"avg_stay":40,"max_stay":135,"max_stay_date":"2025-04-18"},"佛教慈濟醫療財團法人花蓮慈濟醫院-高雄左營":{"avg_go":231,"avg_stay":52,"max_stay":52,"max_stay_date":"2024-07-26"},"光田醫療社團法人光田綜合醫院":{"avg_go":100,"avg_stay":50,"max_stay":50,"max_stay_date":"2023-03-29"},"協和婦女醫院":{"avg_go":6,"avg_stay":18,"max_stay":19,"max_stay_date":"2025-11-14"},"台中榮民總醫院":{"avg_go":103,"avg_stay":60,"max_stay":60,"max_stay_date":"2021-12-23"},"台北市立聯合醫院陽明院區":{"avg_go":11,"avg_stay":37,"max_stay":37,"max_stay_date":"2022-01-13"},"台北榮民總醫院蘇澳分院":{"avg_go":16,"avg_stay":17,"max_stay":17,"max_stay_date":"2019-07-11"},"台灣基督長老教會馬偕醫療財團法人台東馬偕紀念":{"avg_go":297,"avg_stay":69,"max_stay":69,"max_stay_date":"2023-04-14"},"台灣基督長老教會馬偕醫療財團法人淡水馬偕紀念醫院":{"avg_go":18,"avg_stay":62,"max_stay":90,"max_stay_date":"2025-11-10"},"台灣基督長老教會馬偕醫療財團法人馬偕兒童醫院":{"avg_go":5,"avg_stay":37,"max_stay":53,"max_stay_date":"2024-04-17"},"台灣基督長老教會馬偕醫療財團法人馬偕紀念醫院":{"avg_go":7,"avg_stay":22,"max_stay":30,"max_stay_date":"2020-05-19"},"國泰醫療財團法人國泰綜合醫院":{"avg_go":13,"avg_stay":32,"max_stay":72,"max_stay_date":"2024-12-30"},"國泰醫療財團法人新竹國泰綜合醫院":{"avg_go":63,"avg_stay":34,"max_stay":42,"max_stay_date":"2022-07-08"},"國泰醫療財團法人汐止國泰綜合醫院":{"avg_go":22,"avg_stay":39,"max_stay":77,"max_stay_date":"2022-05-23"},"國立成功大學醫學院":{"avg_go":163,"avg_stay":112,"max_stay":112,"max_stay_date":"2025-11-11"},"國立成功大學醫學院附設醫院":{"avg_go":149,"avg_stay":47,"max_stay":90,"max_stay_date":"2020-01-30"},"國立臺灣大學醫學院附設醫院新竹分院":{"avg_go":19,"avg_stay":35,"max_stay":61,"max_stay_date":"2019-07-03"},"國立臺灣大學醫學院附設醫院新竹臺大分院":{"avg_go":60,"avg_stay":36,"max_stay":45,"max_stay_date":"2023-07-29"},"國立臺灣大學醫學院附設醫院新竹臺大分院新竹醫院":{"avg_go":57,"avg_stay":44,"max_stay":78,"max_stay_date":"2024-05-22"},"國立臺灣大學醫學院附設醫院新竹臺大分院生醫醫院":{"avg_go":58,"avg_stay":42,"max_stay":84,"max_stay_date":"2025-02-27"},"國立臺灣大學醫學院附設醫院雲林分院":{"avg_go":147,"avg_stay":53,"max_stay":69,"max_stay_date":"2025-02-03"},"國軍桃園總醫院附設民眾診療服務處":{"avg_go":41,"avg_stay":26,"max_stay":26,"max_stay_date":"2024-05-31"},"基督復臨安息日會醫療財團法人臺安醫院":{"avg_go":20,"avg_stay":28,"max_stay":63,"max_stay_date":"2019-09-12"},"天主教中華聖母修女會醫療財團法人天主教聖馬爾定醫院":{"avg_go":174,"avg_stay":41,"max_stay":47,"max_stay_date":"2023-06-24"},"天主教耕莘醫療財團法人永和耕莘醫院":{"avg_go":13,"avg_stay":28,"max_stay":48,"max_stay_date":"2020-10-06"},"天主教耕莘醫療財團法人耕莘醫院":{"avg_go":18,"avg_stay":33,"max_stay":50,"max_stay_date":"2019-06-24"},"天主教耕莘醫療財團法人耕莘醫院安康院區":{"avg_go":18,"avg_stay":31,"max_stay":31,"max_stay_date":"2024-05-09"},"天主教靈醫會醫療財團法人羅東聖母醫院":{"avg_go":47,"avg_stay":44,"max_stay":75,"max_stay_date":"2023-06-07"},"奇美醫療財團法人奇美醫院":{"avg_go":186,"avg_stay":53,"max_stay":65,"max_stay_date":"2023-04-20"},"宏其醫療社團法人宏其婦幼醫院":{"avg_go":26,"avg_stay":22,"max_stay":22,"max_stay_date":"2025-03-30"},"宥宥婦幼診所":{"avg_go":30,"avg_stay":31,"max_stay":31,"max_stay_date":"2019-04-11"},"康寧醫療財團法人康寧醫院":{"avg_go":16,"avg_stay":20,"max_stay":24,"max_stay_date":"2024-04-18"},"彰化基督教醫療財團法人彰化基督教兒童醫院":{"avg_go":86,"avg_stay":52,"max_stay":139,"max_stay_date":"2025-06-09"},"御生婦幼診所":{"avg_go":10,"avg_stay":34,"max_stay":53,"max_stay_date":"2020-02-19"},"怡仁綜合醫院-禾馨怡仁婦幼中心":{"avg_go":43,"avg_stay":36,"max_stay":36,"max_stay_date":"2024-07-30"},"惠心婦幼診所":{"avg_go":12,"avg_stay":19,"max_stay":19,"max_stay_date":"2020-11-15"},"惠心婦產科小兒科診所":{"avg_go":10,"avg_stay":22,"max_stay":31,"max_stay_date":"2024-06-27"},"惠生保安婦幼診所":{"avg_go":17,"avg_stay":25,"max_stay":32,"max_stay_date":"2023-01-30"},"愛麗生婦產科診所":{"avg_go":24,"avg_stay":18,"max_stay":18,"max_stay_date":"2019-04-27"},"戴德森醫療財團法人嘉義基督教醫院":{"avg_go":152,"avg_stay":52,"max_stay":56,"max_stay_date":"2025-12-01"},"振興醫療財團法人振興醫院":{"avg_go":16,"avg_stay":31,"max_stay":31,"max_stay_date":"2021-08-28"},"敏盛綜合醫院":{"avg_go":28,"avg_stay":29,"max_stay":41,"max_stay_date":"2021-03-16"},"新光醫療財團法人新光吳火獅紀念醫院":{"avg_go":12,"avg_stay":45,"max_stay":110,"max_stay_date":"2020-03-26"},"新北市立土城醫院":{"avg_go":18,"avg_stay":45,"max_stay":45,"max_stay_date":"2021-12-01"},"新北市立土城醫院(委託長庚醫療財團法人興建經營)":{"avg_go":19,"avg_stay":11,"max_stay":11,"max_stay_date":"2023-01-04"},"新北市立聯合醫院三重院區":{"avg_go":7,"avg_stay":30,"max_stay":30,"max_stay_date":"2023-01-01"},"新竹市立馬偕兒童醫院(委託台灣基督長老教會馬偕醫療財團法人興建經營)":{"avg_go":59,"avg_stay":31,"max_stay":43,"max_stay_date":"2025-02-26"},"曜生婦產科診所":{"avg_go":16,"avg_stay":24,"max_stay":32,"max_stay_date":"2025-08-19"},"木生婦幼診所":{"avg_go":5,"avg_stay":17,"max_stay":24,"max_stay_date":"2025-11-22"},"木生婦產科診所":{"avg_go":50,"avg_stay":31,"max_stay":59,"max_stay_date":"2019-07-16"},"東元醫療社團法人東元綜合醫院":{"avg_go":58,"avg_stay":25,"max_stay":25,"max_stay_date":"2023-07-07"},"東和婦產科家庭醫學科診所":{"avg_go":7,"avg_stay":14,"max_stay":14,"max_stay_date":"2022-05-12"},"林儀文婦產科診所":{"avg_go":189,"avg_stay":65,"max_stay":65,"max_stay_date":"2019-04-24"},"桃園惠生保安婦幼診所":{"avg_go":18,"avg_stay":46,"max_stay":46,"max_stay_date":"2019-08-27"},"桃園秉坤婦幼醫院":{"avg_go":35,"avg_stay":20,"max_stay":20,"max_stay_date":"2023-02-20"},"榜生婦產科診所":{"avg_go":21,"avg_stay":27,"max_stay":27,"max_stay_date":"2021-02-23"},"樂寶兒婦幼診所":{"avg_go":13,"avg_stay":21,"max_stay":70,"max_stay_date":"2019-02-18"},"沙爾德聖保祿修女會醫療財團法人聖保祿醫院":{"avg_go":40,"avg_stay":57,"max_stay":78,"max_stay_date":"2024-10-21"},"環球敦品產後護理之家":{"avg_go":10,"avg_stay":19,"max_stay":19,"max_stay_date":"2020-01-27"},"禾馨怡仁婦幼診所":{"avg_go":15,"avg_stay":20,"max_stay":20,"max_stay_date":"2019-06-20"},"禾馨新生婦幼診所":{"avg_go":10,"avg_stay":22,"max_stay":null,"max_stay_date":null},"禾馨桃園婦幼診所":{"avg_go":27,"avg_stay":29,"max_stay":45,"max_stay_date":"2024-11-03"},"禾馨民權婦幼診所":{"avg_go":19,"avg_stay":26,"max_stay":81,"max_stay_date":"2021-09-23"},"秉坤婦幼醫院":{"avg_go":36,"avg_stay":29,"max_stay":29,"max_stay_date":"2021-03-30"},"義大醫療財團法人義大癌治療醫院":{"avg_go":198,"avg_stay":56,"max_stay":58,"max_stay_date":"2022-03-03"},"義大醫療財團法人義大醫院":{"avg_go":185,"avg_stay":65,"max_stay":65,"max_stay_date":"2020-03-14"},"臺中榮民總醫院":{"avg_go":115,"avg_stay":50,"max_stay":66,"max_stay_date":"2021-02-12"},"臺北市立聯合醫院中興院區":{"avg_go":7,"avg_stay":35,"max_stay":67,"max_stay_date":"2025-03-07"},"臺北市立聯合醫院仁愛院區":{"avg_go":17,"avg_stay":37,"max_stay":52,"max_stay_date":"2024-02-16"},"臺北市立聯合醫院和平婦幼院區":{"avg_go":11,"avg_stay":25,"max_stay":45,"max_stay_date":"2020-09-23"},"臺北市立聯合醫院婦幼院區":{"avg_go":5,"avg_stay":29,"max_stay":45,"max_stay_date":"2024-06-27"},"臺北市立聯合醫院忠孝院區":{"avg_go":43,"avg_stay":31,"max_stay":65,"max_stay_date":"2025-11-21"},"臺北市立聯合醫院陽明院區":{"avg_go":15,"avg_stay":28,"max_stay":28,"max_stay_date":"2025-04-22"},"臺北市立萬芳醫院-委託臺北醫學大學辦理":{"avg_go":15,"avg_stay":43,"max_stay":61,"max_stay_date":"2024-12-08"},"臺北市立萬芳醫院－委託財團法人臺北醫學大學辦理":{"avg_go":16,"avg_stay":27,"max_stay":32,"max_stay_date":"2023-02-24"},"臺北醫學大學附設醫院":{"avg_go":10,"avg_stay":23,"max_stay":32,"max_stay_date":"2021-01-06"},"臺灣基督教門諾會醫療財團法人門諾醫院":{"avg_go":126,"avg_stay":43,"max_stay":72,"max_stay_date":"2025-03-11"},"良品婦幼聯合診所":{"avg_go":12,"avg_stay":19,"max_stay":22,"max_stay_date":"2020-01-23"},"英倫產後護理之家":{"avg_go":4,"avg_stay":13,"max_stay":13,"max_stay_date":"2021-06-01"},"菡生婦幼診所":{"avg_go":20,"avg_stay":25,"max_stay":55,"max_stay_date":"2019-05-07"},"蕙生婦幼醫院":{"avg_go":30,"avg_stay":13,"max_stay":13,"max_stay_date":"2019-05-02"},"蕙生醫院":{"avg_go":13,"avg_stay":23,"max_stay":26,"max_stay_date":"2023-09-11"},"行天宮醫療志業醫療財團法人恩主公醫院":{"avg_go":22,"avg_stay":35,"max_stay":89,"max_stay_date":"2021-02-02"},"衛生福利部桃園醫院":{"avg_go":36,"avg_stay":36,"max_stay":50,"max_stay_date":"2025-04-11"},"衛生福利部臺北醫院":{"avg_go":11,"avg_stay":29,"max_stay":42,"max_stay_date":"2024-12-05"},"衛生福利部金門醫院":{"avg_go":29,"avg_stay":20,"max_stay":20,"max_stay_date":"2021-02-05"},"衛生福利部雙和醫院":{"avg_go":13,"avg_stay":27,"max_stay":38,"max_stay_date":"2019-10-14"},"衛生福利部雙和醫院(委託臺北醫學大學興建經營)":{"avg_go":16,"avg_stay":35,"max_stay":51,"max_stay_date":"2025-11-10"},"豐禾婦產科診所":{"avg_go":12,"avg_stay":39,"max_stay":42,"max_stay_date":"2021-09-03"},"豐禾產後護理之家":{"avg_go":15,"avg_stay":12,"max_stay":12,"max_stay_date":"2023-01-06"},"財團法人私立高雄醫學大學附設中和紀念醫院":{"avg_go":220,"avg_stay":48,"max_stay":78,"max_stay_date":"2024-06-05"},"財團法人私立高雄醫學大學附設醫院":{"avg_go":206,"avg_stay":65,"max_stay":80,"max_stay_date":"2021-03-03"},"輔仁大學學校財團法人輔仁大學附設醫院":{"avg_go":23,"avg_stay":31,"max_stay":83,"max_stay_date":"2020-09-07"},"遠華婦產科診所":{"avg_go":16,"avg_stay":56,"max_stay":67,"max_stay_date":"2019-02-27"},"醫療財團法人徐元智先生醫藥基金會亞東紀念醫院":{"avg_go":19,"avg_stay":33,"max_stay":83,"max_stay_date":"2020-11-19"},"醫療財團法人羅許基金會羅東博愛醫院":{"avg_go":54,"avg_stay":74,"max_stay":103,"max_stay_date":"2025-05-26"},"醫療財團法人辜公亮基金會和信治癌中心醫院":{"avg_go":21,"avg_stay":48,"max_stay":48,"max_stay_date":"2025-07-05"},"采新婦幼診所":{"avg_go":8,"avg_stay":26,"max_stay":40,"max_stay_date":"2024-05-25"},"錫安婦產科內科診所":{"avg_go":14,"avg_stay":22,"max_stay":31,"max_stay_date":"2020-06-18"},"鍾婦產科診所":{"avg_go":10,"avg_stay":9,"max_stay":11,"max_stay_date":"2022-07-04"},"長庚醫療財團法人台北長庚紀念醫院":{"avg_go":10,"avg_stay":35,"max_stay":55,"max_stay_date":"2024-03-11"},"長庚醫療財團法人嘉義長庚紀念醫院":{"avg_go":160,"avg_stay":59,"max_stay":65,"max_stay_date":"2023-04-28"},"長庚醫療財團法人基隆長庚紀念醫院":{"avg_go":29,"avg_stay":59,"max_stay":59,"max_stay_date":"2024-09-10"},"長庚醫療財團法人林口長庚紀念醫院":{"avg_go":22,"avg_stay":34,"max_stay":53,"max_stay_date":"2021-07-28"},"長庚醫療財團法人高雄長庚紀念醫院":{"avg_go":199,"avg_stay":40,"max_stay":40,"max_stay_date":"2022-04-18"},"雷世陽婦產科診所":{"avg_go":14,"avg_stay":25,"max_stay":30,"max_stay_date":"2022-11-01"},"高雄榮民總醫院":{"avg_go":211,"avg_stay":48,"max_stay":67,"max_stay_date":"2024-05-08"},"高雄醫學大學附設中和紀念醫院":{"avg_go":214,"avg_stay":41,"max_stay":49,"max_stay_date":"2022-03-17"}};
+const DB = {"三軍總醫院附設民眾診療服務處":{"count":9,"county":"台北市","records":[{"date":"2025-06-23","phone":"(02)87923311分機88045","contact":"曾醫師","unit":"ICU","county":"台北市"},{"date":"2024-10-13","phone":"(02)87923311分機24183","contact":"陳醫師","unit":"急診","county":"台北市"},{"date":"2024-02-01","phone":"(02)87923311分機88045","contact":"吳醫師/值班醫師","unit":"ICU","county":"台北市"},{"date":"2023-04-18","phone":"(02)87923311分機88045","contact":"劉醫師","unit":"ICU","county":"台北市"},{"date":"2023-04-14","phone":"(02)87923311分機88045","contact":"劉醫師","unit":"ICU","county":"台北市"},{"date":"2022-12-26","phone":"(02)87923311分機88045","contact":"Dr林","unit":"ICU","county":"台北市"},{"date":"2022-10-21","phone":"(02)87923311分機88041","contact":"Dr吳","unit":"急診","county":"台北市"},{"date":"2021-12-09","phone":"02-87923311*16054","contact":"胡醫師","unit":"ICU","county":"台北市"},{"date":"2020-08-19","phone":"87923311*16055","contact":"吳醫師","unit":"ICU","county":"台北市"}]},"中國醫藥大學兒童醫院":{"count":3,"county":"台中","records":[{"date":"2024-11-24","phone":"(04)22052121分機12550","contact":"Dr.王柏均","unit":"ICU","county":"台中"},{"date":"2022-08-25","phone":"(04)22052121分機2550","contact":"值班醫師","unit":"ICU","county":"台中"},{"date":"2021-12-14","phone":"(04)2205-2121#2550","contact":"洪醫師","unit":"ICU","county":"台中"}]},"中國醫藥大學新竹附設醫院":{"count":2,"county":"新竹","records":[{"date":"2025-04-02","phone":"(03)5580558分機1520_5樓NICU","contact":"陳醫師","unit":"ICU","county":"新竹"},{"date":"2024-02-02","phone":"(03)5380058分機1567","contact":"黃醫師","unit":"ICU","county":"新竹"}]},"中國醫藥大學附設醫院":{"count":4,"county":"台中","records":[{"date":"2025-07-10","phone":"(04)22052121_MICU分機12290","contact":"羅醫師0981811358","unit":"MICU","county":"台中"},{"date":"2020-04-20","phone":"04-22052121","contact":"陳傑賀","unit":"ICU","county":"台中"},{"date":"2019-11-06","phone":"(04)2205-2121#2550","contact":"張醫師","unit":"ICU","county":"台中"},{"date":"2019-07-30","phone":"0972-267-732  #5158","contact":"急診值班醫師","unit":"急診","county":"台中"}]},"中山醫學大學附設醫院":{"count":5,"county":"台中","records":[{"date":"2025-09-11","phone":"(04)36009595分機20812","contact":"郭醫師","unit":"ICU","county":"台中"},{"date":"2021-10-18","phone":"04-24739595轉20811","contact":"楊醫師","unit":"ICU","county":"台中"},{"date":"2021-10-08","phone":"04-24739595","contact":"李醫師","unit":"ICU","county":"台中"},{"date":"2021-01-21","phone":"(04)2473-9595~20821","contact":"黃醫師","unit":"ICU","county":"台中"},{"date":"2020-01-20","phone":"04-24739595 #20823","contact":"Dr.鄭","unit":"ICU","county":"台中"}]},"中山醫療社團法人中山醫院":{"count":4,"county":"台北市","records":[{"date":"2025-10-18","phone":"(02)27081166分機2962","contact":"林護理師","unit":"ICU","county":"台北市"},{"date":"2025-08-17","phone":"(02)27081166分機2222(2F_BR)","contact":"林醫師","unit":"baby room","county":"台北市"},{"date":"2025-05-13","phone":"(02)27081166分機2962(2F_NICU)","contact":"潘醫師","unit":"ICU","county":"台北市"},{"date":"2021-02-20","phone":"02-27081166轉2222","contact":"林醫師","unit":"baby room","county":"台北市"}]},"佛教慈濟醫療財團法人台中慈濟醫院":{"count":1,"county":"台中","records":[{"date":"2025-02-26","phone":"(04)36060666分機4609或4610(感恩樓6F_PICU)","contact":"值班護理師","unit":"ICU","county":"台中"}]},"佛教慈濟醫療財團法人台北慈濟醫院":{"count":8,"county":"新北市","records":[{"date":"2025-10-15","phone":"(02)66289779分機2577","contact":"洪醫師","unit":"ICU","county":"新北市"},{"date":"2024-09-13","phone":"(02)66289779分機2577","contact":"NP杞小姐","unit":"ICU","county":"新北市"},{"date":"2023-09-17","phone":"(02)66289779分機68126","contact":"賴醫師","unit":"ICU","county":"新北市"},{"date":"2023-05-01","phone":"(02)66289779分機2577","contact":"NP周","unit":"ICU","county":"新北市"},{"date":"2021-08-13","phone":"02-66289779","contact":"邱馨慧","unit":"ICU","county":"新北市"},{"date":"2021-03-01","phone":"02-6628-9779#1331","contact":"陳護理師","unit":"ICU","county":"新北市"},{"date":"2020-01-31","phone":"02-66289779*2577","contact":"杞孟光","unit":"ICU","county":"新北市"},{"date":"2019-08-01","phone":"0972759376","contact":"謝醫師","unit":"ICU","county":"新北市"}]},"佛教慈濟醫療財團法人花蓮慈濟醫院":{"count":14,"county":"花蓮","records":[{"date":"2025-04-18","phone":"(03)8561825分機13307","contact":"秦醫師0939491069","unit":"ICU","county":"花蓮"},{"date":"2024-12-04","phone":"(03)8561825分機13313(NOR)","contact":"陳醫師/值班人員","unit":"ICU","county":"花蓮"},{"date":"2023-10-16","phone":"(03)8561825分機13308(PICU)","contact":"張醫師0972817792","unit":"ICU","county":"花蓮"},{"date":"2023-08-07","phone":"(03)8561825分機13308","contact":"張醫師/值班醫師","unit":"ICU","county":"花蓮"},{"date":"2023-03-24","phone":"(03)8561825分機13307","contact":"張醫師0910258130","unit":"ICU","county":"花蓮"},{"date":"2023-02-19","phone":"(03)8561825","contact":"秦家翊醫師0939491069","unit":"產房","county":"花蓮"},{"date":"2022-12-21","phone":"(03)8561825","contact":"Dr林","unit":"ICU","county":"花蓮"},{"date":"2022-06-01","phone":"(038)561825分機13308","contact":"Dr劉","unit":"急診","county":"花蓮"},{"date":"2021-08-26","phone":"0972817792","contact":"張醫師","unit":"ICU","county":"花蓮"},{"date":"2020-11-12","phone":"03-8561825轉3307","contact":"劉俞暄","unit":"ICU","county":"花蓮"}]},"佛教慈濟醫療財團法人花蓮慈濟醫院-高雄左營":{"count":1,"county":"高雄","records":[{"date":"2024-07-26","phone":"(03)8561825分機12777","contact":"秦家翊醫師0972759371","unit":"ICU","county":"高雄"}]},"光田醫療社團法人光田綜合醫院":{"count":1,"county":"台中","records":[{"date":"2023-03-29","phone":"(04)26622511分機2254","contact":"林醫師","unit":"ICU","county":"台中"}]},"協和婦女醫院":{"count":3,"county":"台北市","records":[{"date":"2025-11-14","phone":"(02)25072222分機200(2F_BR)","contact":"白護理師","unit":"baby room","county":"台北市"},{"date":"2024-03-01","phone":"(02)25072222分機200(BR)","contact":"Nr.白小姐","unit":"baby room","county":"台北市"},{"date":"2021-11-22","phone":"0225072222","contact":"NP","unit":"baby room","county":"台北市"}]},"台中榮民總醫院":{"count":1,"county":"台中","records":[{"date":"2021-12-23","phone":"04-23592525#8157","contact":"劉醫師","unit":"ICU","county":"台中"}]},"台北市立聯合醫院陽明院區":{"count":1,"county":"台北市","records":[{"date":"2022-01-13","phone":"0905212630","contact":"呂醫師","unit":"ICU","county":"台北市"}]},"台北榮民總醫院蘇澳分院":{"count":1,"county":"宜蘭","records":[{"date":"2019-07-11","phone":"03-9905106*5040 or 5041","contact":"周護理師","unit":"RCW","county":"宜蘭"}]},"台灣基督長老教會馬偕醫療財團法人台東馬偕紀念":{"count":1,"county":"台東","records":[{"date":"2023-04-14","phone":"(089)310150分機274","contact":"吳醫師","unit":"ICU","county":"台東"}]},"台灣基督長老教會馬偕醫療財團法人淡水馬偕紀念醫院":{"count":2,"county":"新北市","records":[{"date":"2025-11-10","phone":"(02)28094661分機3682","contact":"邱醫師","unit":"ICU","county":"新北市"},{"date":"2023-01-20","phone":"(02)28094661分機2672","contact":"鄭醫師","unit":"ICU","county":"新北市"}]},"台灣基督長老教會馬偕醫療財團法人馬偕兒童醫院":{"count":4,"county":"台北市","records":[{"date":"2025-01-23","phone":"(02)25433535分機2368(10F_NICU)","contact":"NI-7_住院醫師","unit":"ICU","county":"台北市"},{"date":"2024-04-17","phone":"(02)25433535分機2368","contact":"余醫師","unit":"ICU","county":"台北市"},{"date":"2024-03-04","phone":"(02)25433535分機2368","contact":"呂醫師","unit":"ICU","county":"台北市"},{"date":"2023-02-21","phone":"(02)25433535分機2064","contact":"林醫師0958372348","unit":"ICU","county":"台北市"}]},"台灣基督長老教會馬偕醫療財團法人馬偕紀念醫院":{"count":4,"county":"台北市","records":[{"date":"2021-04-24","phone":"02-25433535#3130","contact":"郭峻瑋醫師","unit":"急診","county":"台北市"},{"date":"2020-12-25","phone":"0225433535","contact":"Dr王","unit":"ICU","county":"台北市"},{"date":"2020-05-19","phone":"0975836097","contact":"劉語涵","unit":"ICU","county":"台北市"},{"date":"2019-05-13","phone":"0963653703","contact":"田醫師","unit":"ICU","county":"台北市"}]},"國泰醫療財團法人國泰綜合醫院":{"count":10,"county":"台北市","records":[{"date":"2024-12-30","phone":"(02)27082121分機6555_NICU","contact":"洪錫全醫師(簡碼#270987)","unit":"ICU","county":"台北市"},{"date":"2024-11-26","phone":"(02)27082121分機6555(5F_NICU)","contact":"邱醫師","unit":"ICU","county":"台北市"},{"date":"2024-11-04","phone":"(02)27082121分機6555","contact":"洪錫全醫師/值班Nr","unit":"ICU","county":"台北市"},{"date":"2024-04-28","phone":"0933271395","contact":"王醫師","unit":"ICU","county":"台北市"},{"date":"2023-12-18","phone":"(02)27082121分機6555","contact":"黃醫師/邱醫師","unit":"ICU","county":"台北市"},{"date":"2023-02-26","phone":"(02)27082121分機3770","contact":"左醫師","unit":"急診","county":"台北市"},{"date":"2021-11-12","phone":"0933894550","contact":"陳醫師","unit":"ICU","county":"台北市"},{"date":"2020-12-04","phone":"02-27082121*6557","contact":"許醫師","unit":"ICU","county":"台北市"},{"date":"2019-08-23","phone":"0983702985","contact":"王醫師","unit":"ICU","county":"台北市"},{"date":"2019-07-03","phone":"022708-2121 #6555","contact":"Dr許","unit":"ICU","county":"台北市"}]},"國泰醫療財團法人新竹國泰綜合醫院":{"count":4,"county":"新竹","records":[{"date":"2025-07-18","phone":"(03)5278999分機8001_8樓NICU","contact":"蔡NP","unit":"ICU","county":"新竹"},{"date":"2023-04-04","phone":"(03)5278999分機8001","contact":"張醫師","unit":"ICU","county":"新竹"},{"date":"2022-07-08","phone":"03-5278-999#8002","contact":"紀孟宏醫師","unit":"ICU","county":"新竹"},{"date":"2020-04-21","phone":"03-5278999*8002","contact":"紀醫師","unit":"ICU","county":"新竹"}]},"國泰醫療財團法人汐止國泰綜合醫院":{"count":10,"county":"新北市","records":[{"date":"2025-08-22","phone":"02 2648 2121","contact":"劉NP","unit":"兒科病房","county":"新北市"},{"date":"2025-05-02","phone":"(02)26482121分機2631(6F_NICU)","contact":"NP袁小姐","unit":"ICU","county":"新北市"},{"date":"2025-03-10","phone":"(02)26432121分機2631或2632","contact":"值班人員","unit":"ICU","county":"新北市"},{"date":"2025-03-05","phone":"(02)26482121分機3910","contact":"NP孫小姐","unit":"baby room","county":"新北市"},{"date":"2025-02-14","phone":"(02)26482121分機2631","contact":"NP彭小姐","unit":"ICU","county":"新北市"},{"date":"2023-03-30","phone":"(02)26482121","contact":"VS李淑婷","unit":"ICU","county":"新北市"},{"date":"2022-06-18","phone":"02-2648-2121 #26312632","contact":"周醫師","unit":"baby room","county":"新北市"},{"date":"2022-05-23","phone":"(02)26482121分機2631","contact":"陳醫師","unit":"ICU","county":"新北市"},{"date":"2021-07-08","phone":"0983107369","contact":"許醫師","unit":"NBC","county":"新北市"},{"date":"2019-04-03","phone":"02-26482121","contact":"NBC 01床主護","unit":"baby room","county":"新北市"}]},"國立成功大學醫學院":{"count":1,"county":"台南","records":[{"date":"2025-11-11","phone":"(06)2353535分機2880(4樓PICU)","contact":"林醫師0972400196","unit":"ICU","county":"台南"}]},"國立成功大學醫學院附設醫院":{"count":10,"county":"台南","records":[{"date":"2025-03-20","phone":"(06)2353535分機2880(4樓PICU)","contact":"蔡醫師","unit":"ICU","county":"台南"},{"date":"2024-07-29","phone":"(06)2353535分機2876","contact":"NP或值班醫師","unit":"ICU","county":"台南"},{"date":"2023-03-15","phone":"(06)2353535分機2880","contact":"康醫師","unit":"ICU","county":"台南"},{"date":"2022-08-26","phone":"(06)235-3535(分機2880)","contact":"Dr康","unit":"ICU","county":"台南"},{"date":"2022-03-29","phone":"(06)2353535分機2881PICU","contact":"Dr吳","unit":"ICU","county":"台南"},{"date":"2021-04-14","phone":"(06)2353535","contact":"蘇醫師","unit":"ICU","county":"台南"},{"date":"2020-12-29","phone":"06-2353535*2880","contact":"劉醫師","unit":"ICU","county":"台南"},{"date":"2020-09-11","phone":"06-2353535#2880","contact":"Dr.陳","unit":"ICU","county":"台南"},{"date":"2020-01-30","phone":"06-2353535*2880","contact":"楊允翔醫師","unit":"ICU","county":"台南"},{"date":"2019-06-03","phone":"0911566833","contact":"R3歐","unit":"ICU","county":"台南"}]},"國立臺灣大學醫學院附設醫院新竹分院":{"count":3,"county":"新竹","records":[{"date":"2019-07-03","phone":"29252426","contact":"張洋銜","unit":"ICU","county":"新竹"},{"date":"2019-03-11","phone":"54455","contact":"陳醫師","unit":"ICU","county":"新竹"},{"date":"2019-02-26","phone":"03-5326651","contact":"林函怡醫師","unit":"ICU","county":"新竹"}]},"國立臺灣大學醫學院附設醫院新竹臺大分院":{"count":3,"county":"新竹","records":[{"date":"2023-09-20","phone":"新竹分院分機522313","contact":"傅俊閔醫師","unit":"ICU","county":"新竹"},{"date":"2023-07-29","phone":"(03)5326151分機251919","contact":"葉醫師","unit":"ICU","county":"新竹"},{"date":"2021-09-27","phone":"03-5326-151","contact":"黃品嘉","unit":"ICU","county":"新竹"}]},"國立臺灣大學醫學院附設醫院新竹臺大分院新竹醫院":{"count":16,"county":"新竹","records":[{"date":"2025-11-03","phone":"(03)5326151_PICU","contact":"葉晴#54154，陳心渝#54536","unit":"ICU","county":"新竹"},{"date":"2024-11-18","phone":"(03)5326151","contact":"董醫師0972656038","unit":"ICU","county":"新竹"},{"date":"2024-05-22","phone":"(03)5326151分機522313","contact":"徐醫師#522313","unit":"ICU","county":"新竹"},{"date":"2024-04-15","phone":"(03)5326151分機522312","contact":"劉醫師","unit":"ICU","county":"新竹"},{"date":"2024-02-19","phone":"(03)53226151分機522313","contact":"賀紹茹醫師#54534","unit":"ICU","county":"新竹"},{"date":"2024-02-04","phone":"分機53547","contact":"許瑋襄醫師","unit":"ICU","county":"新竹"},{"date":"2024-01-24","phone":"(03)5326151","contact":"洪瑋勵醫師0972654060","unit":"ICU","county":"新竹"},{"date":"2023-05-02","phone":"035326151-522312","contact":"葉珊","unit":"ICU","county":"新竹"},{"date":"2023-03-09","phone":"(03)5326151分機522313","contact":"徐醫師#53039","unit":"ICU","county":"新竹"},{"date":"2022-10-05","phone":"簡碼53039","contact":"Dr徐","unit":"3F病房","county":"新竹"}]},"國立臺灣大學醫學院附設醫院新竹臺大分院生醫醫院":{"count":15,"county":"新竹","records":[{"date":"2025-10-30","phone":"分機533135","contact":"廖醫師#55990","unit":"ICU","county":"新竹"},{"date":"2025-08-01","phone":"(03)6677600","contact":"賴醫師/NP簡碼53777","unit":"ICU","county":"新竹"},{"date":"2025-07-27","phone":"(03)6677600","contact":"賴佳妤醫師0972654631","unit":"ICU","county":"新竹"},{"date":"2025-02-27","phone":"(0)6677600分機532850","contact":"NP許小姐#54559","unit":"ICU","county":"新竹"},{"date":"2025-02-27","phone":"分機532850","contact":"劉思妤醫師#41074","unit":"ICU","county":"新竹"},{"date":"2025-02-15","phone":"(03)6677600","contact":"賴建亦醫師0972654675","unit":"病房(4A15-5)","county":"新竹"},{"date":"2024-12-12","phone":"(03)6677600","contact":"龔柏榕醫師#54659","unit":"ICU","county":"新竹"},{"date":"2024-09-04","phone":"(03)3377600分機532850","contact":"周醫師","unit":"ICU","county":"新竹"},{"date":"2024-05-20","phone":"(03)6677600","contact":"廖醫師#55990","unit":"ICU","county":"新竹"},{"date":"2024-05-09","phone":"(03)6677600","contact":"陳醫師#55989","unit":"ICU","county":"新竹"}]},"國立臺灣大學醫學院附設醫院雲林分院":{"count":3,"county":"雲林","records":[{"date":"2025-05-03","phone":"(05)5323944分機563410(3F_NICU)","contact":"陳心渝醫師","unit":"ICU","county":"雲林"},{"date":"2025-02-03","phone":"(05)5323911分機567102(2A)","contact":"蔡政憲醫師0972655467","unit":"ICU","county":"雲林"},{"date":"2022-11-06","phone":"2-51784","contact":"Dr李","unit":"ICU","county":"雲林"}]},"國軍桃園總醫院附設民眾診療服務處":{"count":1,"county":"桃園","records":[{"date":"2024-05-31","phone":"(03)4799595分機329042(NBC)","contact":"陳醫師","unit":"baby room","county":"桃園"}]},"基督復臨安息日會醫療財團法人臺安醫院":{"count":21,"county":"台北市","records":[{"date":"2025-01-05","phone":"(02)2778151分機2533","contact":"NP方小姐/黃醫師","unit":"NOR","county":"台北市"},{"date":"2024-11-28","phone":"(02)27718151分機2532","contact":"NP王小姐","unit":"ICU","county":"台北市"},{"date":"2024-05-27","phone":"02-27718151#2532","contact":"NP","unit":"ICU","county":"台北市"},{"date":"2024-03-05","phone":"(02)27718151分機2532","contact":"NP徐小姐","unit":"ICU","county":"台北市"},{"date":"2024-01-22","phone":"(02)27718151分機2533(5樓NICU)","contact":"NP方小姐","unit":"ICU","county":"台北市"},{"date":"2024-01-19","phone":"(02)27718151分機2532(5樓NICU)","contact":"NP方小姐","unit":"ICU","county":"台北市"},{"date":"2022-10-12","phone":"(02)27718151分機2532","contact":"NP","unit":"ICU","county":"台北市"},{"date":"2022-08-25","phone":"(02)27718151分機2532","contact":"NP李","unit":"ICU","county":"台北市"},{"date":"2021-10-01","phone":"(02)27718151#2532","contact":"NP方","unit":"ICU","county":"台北市"},{"date":"2021-07-28","phone":"02-27718151","contact":"專師","unit":"ICU","county":"台北市"}]},"天主教中華聖母修女會醫療財團法人天主教聖馬爾定醫院":{"count":2,"county":"嘉義","records":[{"date":"2023-06-24","phone":"(05)2756000分機3621","contact":"賴醫師","unit":"ICU","county":"嘉義"},{"date":"2022-11-23","phone":"(05)2756000分機7501","contact":"NP袁小姐","unit":"病房","county":"嘉義"}]},"天主教耕莘醫療財團法人永和耕莘醫院":{"count":3,"county":"新北市","records":[{"date":"2023-12-09","phone":"(02)29286060分機21111","contact":"陳醫師","unit":"baby room","county":"新北市"},{"date":"2020-10-06","phone":"02-66206919#20814","contact":"李醫師","unit":"ICU","county":"新北市"},{"date":"2020-01-04","phone":"02-29286060轉20810","contact":"林醫師","unit":"baby room","county":"新北市"}]},"天主教耕莘醫療財團法人耕莘醫院":{"count":13,"county":"新北市","records":[{"date":"2025-10-30","phone":"(02)22193391","contact":"王醫師","unit":"ICU","county":"新北市"},{"date":"2025-06-11","phone":"02-22193391 轉15525","contact":"黃醫師(R3)","unit":"ICU","county":"台北市"},{"date":"2024-09-10","phone":"(02)22193391分機15530","contact":"陳醫師0958313953","unit":"ICU","county":"新北市"},{"date":"2024-07-07","phone":"(02)22193391","contact":"陳醫師0958313953","unit":"ICU","county":"新北市"},{"date":"2022-11-12","phone":"(02)22193391分機15525","contact":"Dr文","unit":"ICU","county":"新北市"},{"date":"2022-01-11","phone":"02-2219-3391#15525","contact":"醫師","unit":"ICU","county":"新北市"},{"date":"2021-12-01","phone":"02 2219-3391","contact":"NP","unit":"NBC","county":"新北市"},{"date":"2021-11-07","phone":"0222193391","contact":"NP","unit":"ICU","county":"新北市"},{"date":"2021-04-08","phone":"0939682766","contact":"孫醫師","unit":"ICU","county":"新北市"},{"date":"2020-10-25","phone":"02-2193391","contact":"02 2193391","unit":"ICU","county":"新北市"}]},"天主教耕莘醫療財團法人耕莘醫院安康院區":{"count":1,"county":"新北市","records":[{"date":"2024-05-09","phone":"(02)22123066分機55531","contact":"古醫師","unit":"ICU","county":"新北市"}]},"天主教靈醫會醫療財團法人羅東聖母醫院":{"count":8,"county":"宜蘭","records":[{"date":"2025-02-18","phone":"(03)9544106分機7761(7F_NICU)","contact":"NP賴小姐","unit":"ICU","county":"宜蘭"},{"date":"2024-11-26","phone":"(03)9544106(A棟7樓)","contact":"于醫師0932360944","unit":"ICU","county":"宜蘭"},{"date":"2024-10-02","phone":"(03)9544106分機7761","contact":"值班人員","unit":"ICU","county":"宜蘭"},{"date":"2023-10-06","phone":"(03)9544106分機776(NICU)","contact":"NP賴小姐","unit":"ICU","county":"宜蘭"},{"date":"2023-06-07","phone":"(03)9544106分機7763","contact":"NP","unit":"ICU","county":"宜蘭"},{"date":"2020-12-31","phone":"03-9544106#7761","contact":"賴護理師","unit":"ICU","county":"宜蘭"},{"date":"2020-12-07","phone":"03-96544106轉7761","contact":"陳醫師","unit":"ICU","county":"宜蘭"},{"date":"2020-03-24","phone":"039544106#7761","contact":"賴專科護理師","unit":"ICU","county":"宜蘭"}]},"奇美醫療財團法人奇美醫院":{"count":4,"county":"台南","records":[{"date":"2025-09-26","phone":"(06)2812811分機57451(PICU)","contact":"洪醫師","unit":"ICU","county":"台南"},{"date":"2025-06-04","phone":"(06)2812811分機57451","contact":"VS周/Nr","unit":"ICU","county":"台南"},{"date":"2024-02-22","phone":"(06)2812811分機57451","contact":"值班醫師","unit":"ICU","county":"台南"},{"date":"2023-04-20","phone":"(06)2812811分機57451","contact":"周醫師(VS)","unit":"ICU","county":"台南"}]},"宏其醫療社團法人宏其婦幼醫院":{"count":2,"county":"桃園","records":[{"date":"2025-03-30","phone":"(03)4618888分機7755","contact":"顏NP","unit":"baby room","county":"桃園"},{"date":"2020-10-19","phone":"034618888#7755#7775","contact":"沒寫","unit":"NOR","county":"桃園"}]},"宥宥婦幼診所":{"count":1,"county":"新北市","records":[{"date":"2019-04-11","phone":"02-82839090 #500","contact":"曾醫師","unit":"baby room","county":"新北市"}]},"康寧醫療財團法人康寧醫院":{"count":3,"county":"台北市","records":[{"date":"2024-04-18","phone":"(02)26345500分機6607(6樓BR)","contact":"NP許小姐","unit":"baby room","county":"台北市"},{"date":"2022-02-10","phone":"0226345500","contact":"NP","unit":"baby room","county":"台北市"},{"date":"2019-12-09","phone":"26345500#6602","contact":"許護理師","unit":"baby room","county":"新北市"}]},"彰化基督教醫療財團法人彰化基督教兒童醫院":{"count":25,"county":"彰化","records":[{"date":"2025-10-07","phone":"(04)7238595分機1471(4F_NBC)","contact":"林醫師","unit":"ICU","county":"彰化"},{"date":"2025-06-09","phone":"(04)7238595分機1372","contact":"吳醫師0917153628","unit":"ICU","county":"彰化"},{"date":"2024-09-09","phone":"(04)7238595分機1371","contact":"謝醫師","unit":"ICU","county":"彰化"},{"date":"2023-09-13","phone":"(04)7238595分機1371","contact":"黃傑瑞醫師","unit":"ICU","county":"彰化"},{"date":"2023-03-31","phone":"(04)7238595分機1371","contact":"林醫師","unit":"ICU","county":"彰化"},{"date":"2023-03-27","phone":"(04)7238595分機1371","contact":"林醫師","unit":"ICU","county":"彰化"},{"date":"2022-06-17","phone":"(04)7238595分機1371","contact":"Dr.李","unit":"ICU","county":"彰化"},{"date":"2022-03-09","phone":"(04)7238595/nicu分機1471","contact":"陳醫師","unit":"ICU","county":"彰化"},{"date":"2021-10-08","phone":"04-7238595轉1371","contact":"許醫師","unit":"baby room","county":"彰化"},{"date":"2021-09-17","phone":"04-723-8595#1371","contact":"黃醫生","unit":"ICU","county":"彰化"}]},"御生婦幼診所":{"count":2,"county":"新北市","records":[{"date":"2022-08-19","phone":"(02)29231818","contact":"Nr","unit":"baby room","county":"新北市"},{"date":"2020-02-19","phone":"(02)29231818~200","contact":"nurse溫","unit":"baby room","county":"新北市"}]},"怡仁綜合醫院-禾馨怡仁婦幼中心":{"count":2,"county":"桃園","records":[{"date":"2024-11-05","phone":"(03)4787733分機5686(6F禾馨怡仁婦幼中心)","contact":"Nr.","unit":"baby room","county":"桃園"},{"date":"2024-07-30","phone":"(03)4787733分機5686","contact":"NP黃小姐","unit":"baby room","county":"桃園"}]},"惠心婦幼診所":{"count":1,"county":"新北市","records":[{"date":"2020-11-15","phone":"0229782088","contact":"蔡護理師","unit":"baby room","county":"新北市"}]},"惠心婦產科小兒科診所":{"count":4,"county":"新北市","records":[{"date":"2024-12-06","phone":"(02)29782088","contact":"Nr.","unit":"baby room","county":"新北市"},{"date":"2024-06-27","phone":"(02)29782088","contact":"護理師","unit":"baby room","county":"新北市"},{"date":"2022-11-05","phone":"(02)29781998分機5201","contact":"BR人員","unit":"baby room","county":"新北市"},{"date":"2022-01-11","phone":"2978-1999#5202","contact":"高護理師","unit":"baby room","county":"新北市"}]},"惠生保安婦幼診所":{"count":11,"county":"新北市","records":[{"date":"2023-06-28","phone":"(02)86875678","contact":"齊醫師","unit":"baby room","county":"新北市"},{"date":"2023-01-30","phone":"(02)86875678分機10288","contact":"齊醫師","unit":"baby room","county":"新北市"},{"date":"2023-01-20","phone":"(02)86875678分機1028","contact":"齊醫師0935247741","unit":"baby room","county":"新北市"},{"date":"2022-11-05","phone":"(02)86875678分機10288","contact":"Dr齊","unit":"baby room","county":"新北市"},{"date":"2022-06-02","phone":"0935247471","contact":"Dr齊","unit":"baby room","county":"新北市"},{"date":"2022-05-21","phone":"0935247741","contact":"齊醫師","unit":"baby room","county":"新北市"},{"date":"2020-06-08","phone":"02-86875678*10288","contact":"齊醫師","unit":"baby room","county":"新北市"},{"date":"2019-11-09","phone":"02-86875678","contact":"齊醫師","unit":"baby room","county":"新北市"},{"date":"2019-05-20","phone":"0286875678","contact":"齊醫師","unit":"baby room","county":"台北市"},{"date":"2019-05-12","phone":"032185678","contact":"黃護理師","unit":"baby room","county":"桃園"}]},"愛麗生婦產科診所":{"count":1,"county":"新北市","records":[{"date":"2019-04-27","phone":"02 2289 0666","contact":"林小姐","unit":"產房","county":"新北市"}]},"戴德森醫療財團法人嘉義基督教醫院":{"count":2,"county":"嘉義","records":[{"date":"2025-12-01","phone":"(05)2765041分機5882","contact":"值班醫師","unit":"ICU","county":"嘉義"},{"date":"2024-07-29","phone":"(06)2765041分機5882","contact":"CR田醫師","unit":"ICU","county":"嘉義"}]},"振興醫療財團法人振興醫院":{"count":1,"county":"台北市","records":[{"date":"2021-08-28","phone":"(02)2826-4400#6515","contact":"洪護理師","unit":"ICU","county":"台北市"}]},"敏盛綜合醫院":{"count":5,"county":"桃園","records":[{"date":"2024-10-31","phone":"(03)3179599分機1029","contact":"NP邱小姐","unit":"baby room","county":"桃園"},{"date":"2022-11-02","phone":"0933621088#1049","contact":"卓芷伊","unit":"ICU","county":"桃園"},{"date":"2021-03-16","phone":"03-3179599#1039","contact":"02床主護","unit":"baby room","county":"桃園"},{"date":"2021-01-15","phone":"0980392682","contact":"余NP","unit":"baby room","county":"桃園"},{"date":"2019-02-20","phone":"03-3179599 #1039","contact":"Dr","unit":"ICU","county":"桃園"}]},"新光醫療財團法人新光吳火獅紀念醫院":{"count":13,"county":"台北市","records":[{"date":"2025-07-28","phone":"(02)28332211分機5870","contact":"蔡醫師","unit":"ICU","county":"台北市"},{"date":"2025-05-07","phone":"(02)28332211分機5870(5F_NBC)","contact":"蔡醫師","unit":"ICU","county":"台北市"},{"date":"2025-02-09","phone":"(02)28332211分機5870","contact":"住院醫師","unit":"ICU","county":"台北市"},{"date":"2024-10-15","phone":"(02)28332211分機5870","contact":"張醫師","unit":"ICU","county":"台北市"},{"date":"2024-03-06","phone":"(02)28332211分機5871","contact":"VS蔡醫師/R馬醫師","unit":"ICU","county":"台北市"},{"date":"2023-12-01","phone":"(02)28332211分機5871","contact":"陳醫師0984160759","unit":"baby room","county":"台北市"},{"date":"2023-10-15","phone":"(02)28332211分機5870or5871(PICU)","contact":"蔡醫師0911354942","unit":"ICU","county":"台北市"},{"date":"2023-08-28","phone":"(02)28332211","contact":"VS陳怡伶","unit":"ICU","county":"台北市"},{"date":"2022-12-29","phone":"(02)28332211分機5870","contact":"Dr蔡","unit":"ICU","county":"台北市"},{"date":"2020-01-03","phone":"02-28332211轉5870","contact":"邱醫師","unit":"ICU","county":"台北市"}]},"新北市立土城醫院":{"count":1,"county":"新北市","records":[{"date":"2021-12-01","phone":"0975366117","contact":"邱醫師","unit":"ICU","county":"新北市"}]},"新北市立土城醫院(委託長庚醫療財團法人興建經營)":{"count":1,"county":"新北市","records":[{"date":"2023-01-04","phone":"(02)22630588分機2993(ER)","contact":"NP","unit":"ICU","county":"新北市"}]},"新北市立聯合醫院三重院區":{"count":1,"county":"新北市","records":[{"date":"2023-01-01","phone":"(02)29829111分機(NBC)","contact":"藍醫師0953139290","unit":"ICU","county":"新北市"}]},"新竹市立馬偕兒童醫院(委託台灣基督長老教會馬偕醫療財團法人興建經營)":{"count":4,"county":"新竹","records":[{"date":"2025-02-26","phone":"(03)5179999分機6601","contact":"宋醫師0975835845","unit":"ICU","county":"新竹"},{"date":"2024-08-19","phone":"(03)5179999分機6531","contact":"NP郭小姐","unit":"ICU","county":"新竹"},{"date":"2024-04-25","phone":"(03)5719999分機6602(PICU)","contact":"王醫師","unit":"ICU","county":"新竹"},{"date":"2023-09-07","phone":"(03)5719999分機6602","contact":"陳醫師","unit":"ICU","county":"新竹"}]},"曜生婦產科診所":{"count":2,"county":"新北市","records":[{"date":"2025-08-19","phone":"(02)22763535分機200","contact":"護理師","unit":"baby room","county":"新北市"},{"date":"2023-04-29","phone":"(02)22763535分機200","contact":"Nr.黃","unit":"baby room","county":"新北市"}]},"木生婦幼診所":{"count":7,"county":"台北市","records":[{"date":"2025-11-29","phone":"(02)25012312分機516_BR","contact":"張醫師","unit":"baby room","county":"台北市"},{"date":"2025-11-22","phone":"(02)81832016分機516","contact":"張醫師","unit":"baby room","county":"台北市"},{"date":"2024-03-21","phone":"(02)25012312分機516","contact":"Nr.萬小姐","unit":"baby room","county":"台北市"},{"date":"2024-02-02","phone":"(02)25012312","contact":"護理師","unit":"baby room","county":"台北市"},{"date":"2023-11-01","phone":"(02)25012312分機5(BR)","contact":"值班Nr.","unit":"baby room","county":"台北市"},{"date":"2023-06-16","phone":"(02)25023312","contact":"白醫師","unit":"baby room","county":"台北市"},{"date":"2022-11-02","phone":"(02)25012312分機516","contact":"Dr邱","unit":"baby room","county":"台北市"}]},"木生婦產科診所":{"count":6,"county":"台北市","records":[{"date":"2020-06-12","phone":"2501-2312轉516","contact":"白醫師","unit":"baby room","county":"台北市"},{"date":"2019-10-30","phone":"02-25012312 #516","contact":"nurse","unit":"baby room","county":"台北市"},{"date":"2019-10-01","phone":"0225012312","contact":"白醫師","unit":"baby room","county":"台北市"},{"date":"2019-07-29","phone":"02-25012312分機6","contact":"魯醫師","unit":"baby room","county":"台北市"},{"date":"2019-07-16","phone":"0225012312 *516","contact":"陳星佑醫師","unit":"baby room","county":"台北市"},{"date":"2019-07-16","phone":"0225012312 *516","contact":"陳星佑醫師","unit":"baby room","county":"台北市"}]},"東元醫療社團法人東元綜合醫院":{"count":1,"county":"新竹","records":[{"date":"2023-07-07","phone":"03-5527000 #1251 #1250","contact":"NP/Nr.","unit":"baby room","county":"新竹"}]},"東和婦產科家庭醫學科診所":{"count":1,"county":"新北市","records":[{"date":"2022-05-12","phone":"(02)2972-9627分機200","contact":"醫師","unit":"baby room","county":"新北市"}]},"林儀文婦產科診所":{"count":1,"county":"新北市","records":[{"date":"2019-04-24","phone":"29696995轉200","contact":"醫師","unit":"產房","county":"新北市"}]},"桃園惠生保安婦幼診所":{"count":1,"county":"桃園","records":[{"date":"2019-08-27","phone":"032185678-20288","contact":"黃醫師","unit":"產房","county":"桃園"}]},"桃園秉坤婦幼醫院":{"count":1,"county":"桃園","records":[{"date":"2023-02-20","phone":"(03)3709191分機2817","contact":"蘇醫師/魏主任","unit":"baby room","county":"桃園"}]},"榜生婦產科診所":{"count":1,"county":"新北市","records":[{"date":"2021-02-23","phone":"22034701#70","contact":"護理師","unit":"baby room","county":"新北市"}]},"樂寶兒婦幼診所":{"count":35,"county":"新北市","records":[{"date":"2025-10-08","phone":"02-2990-1122#135","contact":"護理師","unit":"baby room","county":"新北市"},{"date":"2025-07-23","phone":"(02)29901122分機135","contact":"護理師","unit":"baby room","county":"新北市"},{"date":"2025-07-06","phone":"(02)29901122分機135","contact":"陳護理師","unit":"baby room","county":"新北市"},{"date":"2024-12-18","phone":"(02)2990122分機135","contact":"Nr","unit":"baby room","county":"新北市"},{"date":"2024-10-06","phone":"(02)29901122分機135","contact":"Nr.","unit":"baby room","county":"新北市"},{"date":"2024-07-04","phone":"(02)29901122","contact":"陳護理師","unit":"baby room","county":"新北市"},{"date":"2024-05-29","phone":"(02)29901122分機137","contact":"護理師","unit":"產房","county":"新北市"},{"date":"2024-04-23","phone":"(02)29901122分機135(BR)","contact":"Nr.陳小姐","unit":"baby room","county":"新北市"},{"date":"2024-04-04","phone":"(02)29901122分機135","contact":"Nr","unit":"baby room","county":"新北市"},{"date":"2024-02-02","phone":"(02)29901122分機135","contact":"陳護理師","unit":"baby room","county":"新北市"}]},"沙爾德聖保祿修女會醫療財團法人聖保祿醫院":{"count":2,"county":"桃園","records":[{"date":"2025-07-14","phone":"03-3613141","contact":"翁醫師","unit":"急診","county":"桃園"},{"date":"2024-10-21","phone":"(03)3613141轉3328","contact":"NP曾","unit":"ICU","county":"桃園"}]},"環球敦品產後護理之家":{"count":1,"county":"台北市","records":[{"date":"2020-01-27","phone":"23715777*200","contact":"護理師","unit":"baby room","county":"台北市"}]},"禾馨怡仁婦幼診所":{"count":1,"county":"桃園","records":[{"date":"2019-06-20","phone":"034787733-5686","contact":"nurse","unit":"baby room","county":"桃園"}]},"禾馨新生婦幼診所":{"count":113,"county":"台北市","records":[{"date":"2025-12-30","phone":"(02)2368-2333分機2386","contact":"護理師","unit":"baby room","county":"台北市"},{"date":"2025-10-28","phone":"(02)23682333分機2386","contact":"黃護理師","unit":"baby room","county":"台北市"},{"date":"2025-09-19","phone":"(02)23682333分機2368","contact":"黃護理師","unit":"baby room","county":"台北市"},{"date":"2025-08-20","phone":"(02)23682333分機2387","contact":"NP","unit":"baby room","county":"台北市"},{"date":"2025-08-16","phone":"(02)23682333分機2386","contact":"NP","unit":"baby room","county":"台北市"},{"date":"2025-07-29","phone":"02-2368-2333","contact":"劉NP","unit":"NICU","county":"台北市"},{"date":"2025-05-25","phone":"(02)23682333分機2387","contact":"NP劉小姐","unit":"baby room","county":"台北市"},{"date":"2025-02-20","phone":"(03)23698833分機2368","contact":"林雅藍醫師","unit":"baby room","county":"台北市"},{"date":"2024-12-25","phone":"(02)23682333分機2387","contact":"NP劉小姐","unit":"baby room","county":"台北市"},{"date":"2024-09-24","phone":"(02)23682333分機2386","contact":"NP鄭小姐","unit":"baby room","county":"台北市"}]},"禾馨桃園婦幼診所":{"count":3,"county":"桃園","records":[{"date":"2024-11-03","phone":"(03)3465333分機7388","contact":"值班人員","unit":"baby room","county":"桃園"},{"date":"2022-09-09","phone":"0921562068","contact":"沈醫師","unit":"baby room","county":"桃園"},{"date":"2022-04-19","phone":"(03)3465333分機7388","contact":"NP","unit":"baby room","county":"桃園"}]},"禾馨民權婦幼診所":{"count":115,"county":"台北市","records":[{"date":"2025-07-27","phone":"(02)55713333分機3589","contact":"NP王","unit":"baby room","county":"台北市"},{"date":"2025-06-21","phone":"0928128851","contact":"周NP","unit":"baby room","county":"台北市"},{"date":"2025-04-09","phone":"(02)55713333分機3688(6F_BR)","contact":"NP徐小姐","unit":"baby room","county":"台北市"},{"date":"2024-11-11","phone":"(02)55713333分機3688(6F BR)","contact":"NP","unit":"baby room","county":"台北市"},{"date":"2024-10-31","phone":"(02)55713333分機3688(6F BR)","contact":"NP","unit":"baby room","county":"台北市"},{"date":"2024-08-31","phone":"(02)55713333分機3688","contact":"值班人員","unit":"baby room","county":"台北市"},{"date":"2024-06-28","phone":"(02)55713333分機3688(6F_BR)","contact":"NP莊小姐","unit":"baby room","county":"台北市"},{"date":"2024-03-23","phone":"02-5571-3333#3586","contact":"古護理師","unit":"baby room","county":"台北市"},{"date":"2024-03-22","phone":"02-5571-3333#3589","contact":"NP","unit":"baby room","county":"台北市"},{"date":"2024-01-19","phone":"(02)55713333分機3586(6F)","contact":"NP古小姐","unit":"baby room","county":"台北市"}]},"秉坤婦幼醫院":{"count":1,"county":"桃園","records":[{"date":"2021-03-30","phone":"03-4025866#222","contact":"新生兒科醫師","unit":"baby room","county":"桃園"}]},"義大醫療財團法人義大癌治療醫院":{"count":2,"county":"高雄","records":[{"date":"2022-11-20","phone":"(07)6150011分機253388","contact":"Dr王","unit":"ICU","county":"高雄"},{"date":"2022-03-03","phone":"076150011","contact":"林醫師/分機3571","unit":"新生兒中重度","county":"高雄"}]},"義大醫療財團法人義大醫院":{"count":1,"county":"高雄","records":[{"date":"2020-03-14","phone":"0922888249","contact":"周醫師","unit":"ICU","county":"高雄"}]},"育馨婦產科診所":{"count":1,"county":"新北市","records":[{"date":"2019-11-28","phone":"(02)8953-1086","contact":"周護理師","unit":"baby room","county":"新北市"}]},"臺中榮民總醫院":{"count":5,"county":"台中","records":[{"date":"2023-10-21","phone":"(04)23592525分機8157(NICU_5F)","contact":"林醫師","unit":"ICU","county":"台中"},{"date":"2023-09-17","phone":"(04)23592525 #","contact":"NI","unit":"ICU","county":"台中"},{"date":"2023-07-18","phone":"(04)23592525分機8156","contact":"吳醫師","unit":"ICU","county":"台中"},{"date":"2021-12-10","phone":"(04)2359-2525~8156","contact":"陳CR","unit":"ICU","county":"台中"},{"date":"2021-02-12","phone":"04-23592525轉8156","contact":"李孟樺醫師","unit":"ICU","county":"台中"}]},"臺北市立聯合醫院中興院區":{"count":4,"county":"台北市","records":[{"date":"2025-11-18","phone":"(02)25523234分機8081(8樓NBC)","contact":"簡醫師0935839966","unit":"NBC","county":"台北市"},{"date":"2025-03-07","phone":"(02)25523234分機5613_NICU","contact":"簡醫師","unit":"ICU","county":"台北市"},{"date":"2022-12-12","phone":"(02)25523234分機5612","contact":"Dr柯","unit":"ICU","county":"台北市"},{"date":"2022-08-01","phone":"(02)25523234分機5612","contact":"Dr.施(0979311422)","unit":"NOR","county":"台北市"}]},"臺北市立聯合醫院仁愛院區":{"count":3,"county":"台北市","records":[{"date":"2025-04-01","phone":"(02)27093600分機3413_4樓NICU","contact":"王怡方醫師0911851320","unit":"ICU","county":"台北市"},{"date":"2024-02-16","phone":"(02)27093600","contact":"王怡方醫師0911851320","unit":"baby room","county":"台北市"},{"date":"2019-04-28","phone":"(02)2709-3600","contact":"丁","unit":"ICU","county":"台北市"}]},"臺北市立聯合醫院和平婦幼院區":{"count":9,"county":"台北市","records":[{"date":"2022-03-12","phone":"02-23916470分機1913","contact":"鄭彥辰0966556126","unit":"ICU","county":"台北市"},{"date":"2022-02-24","phone":"0905213329","contact":"黃啟南","unit":"ICU","county":"台北市"},{"date":"2022-01-28","phone":"02-2391-6470#1913","contact":"鄭彥辰","unit":"ICU","county":"台北市"},{"date":"2021-12-11","phone":"0223416489","contact":"黃啟男醫師","unit":"ICU","county":"台北市"},{"date":"2021-08-17","phone":"(02)2391-6471*1931","contact":"許專科護理師","unit":"中重度病房","county":"台北市"},{"date":"2020-10-04","phone":"0958762673","contact":"吳常涓醫師","unit":"ICU","county":"台北市"},{"date":"2020-09-23","phone":"0979-307-499","contact":"王醫生","unit":"ICU","county":"台北市"},{"date":"2020-06-24","phone":"0919909355","contact":"林醫師","unit":"ICU","county":"台北市"},{"date":"2019-10-02","phone":"02-27093600*3413","contact":"吳醫師","unit":"ICU","county":"台北市"}]},"臺北市立聯合醫院婦幼院區":{"count":12,"county":"台北市","records":[{"date":"2025-12-14","phone":"(02)23416489_NICU專線","contact":"張醫師","unit":"ICU","county":"台北市"},{"date":"2025-07-22","phone":"(02)23416489_NICU專線","contact":"柯醫師0934264573","unit":"ICU","county":"台北市"},{"date":"2025-06-11","phone":"(02)23416489_PICU專線","contact":"黃啟南醫師","unit":"ICU","county":"台北市"},{"date":"2025-03-14","phone":"(02)23416468","contact":"鄭彥辰0966556126","unit":"ICU","county":"台北市"},{"date":"2025-02-26","phone":"(02)23416489(PICU專線)","contact":"黃啟南醫師","unit":"ICU","county":"台北市"},{"date":"2025-02-03","phone":"(02)23916470分機1933(PICU)","contact":"黃啟男醫師0979307408","unit":"ICU","county":"台北市"},{"date":"2025-02-01","phone":"(02)23916470","contact":"柯申0934264573","unit":"ICU","county":"台北市"},{"date":"2024-06-27","phone":"02-","contact":"柯申醫師0934264573","unit":"ICU","county":"台北市"},{"date":"2024-03-26","phone":"(02)23416489(NICU專線)","contact":"柯申醫師0934264573","unit":"ICU","county":"台北市"},{"date":"2023-07-19","phone":"(02)23916470分機1931","contact":"黃醫師0905213063","unit":"ICU","county":"台北市"}]},"臺北市立聯合醫院忠孝院區":{"count":7,"county":"台北市","records":[{"date":"2025-11-21","phone":"(02)27861288分機8591(5樓NICU)","contact":"杜醫師","unit":"ICU","county":"台北市"},{"date":"2025-01-10","phone":"(02_27861288分機8591或8570(5F_NICU)","contact":"陳醫師","unit":"ICU","county":"台北市"},{"date":"2023-07-14","phone":"(02)26723456分機6918","contact":"劉蓁醫師","unit":"ICU","county":"台北市"},{"date":"2023-06-28","phone":"(02)27861288","contact":"劉蓁醫師/NP","unit":"baby room","county":"台北市"},{"date":"2022-11-09","phone":"(02)27861288分機8570(NOR)","contact":"Dr.劉","unit":"ICU","county":"台北市"},{"date":"2019-10-08","phone":"2786-1288轉8570","contact":"李醫師","unit":"ICU","county":"台北市"},{"date":"2019-08-18","phone":"02-2786-1288 #8324","contact":"侯醫師","unit":"ICU","county":"台北市"}]},"臺北市立聯合醫院陽明院區":{"count":1,"county":"台北市","records":[{"date":"2025-04-22","phone":"(02)28353456分機6538(5F_BR)","contact":"顏醫師","unit":"baby room","county":"台北市"}]},"臺北市立萬芳醫院-委託臺北醫學大學辦理":{"count":4,"county":"台北市","records":[{"date":"2025-12-27","phone":"(02)29307930分機2605(PICU)","contact":"黃醫師","unit":"ICU","county":"台北市"},{"date":"2024-12-08","phone":"( 02)29307930","contact":"劉蓁醫師0919305439","unit":"ICU","county":"台北市"},{"date":"2024-10-16","phone":"(02)29307930分機2603","contact":"陳茂傑醫師0956525370","unit":"ICU","county":"台北市"},{"date":"2024-06-18","phone":"NBC#2603","contact":"劉蓁醫師","unit":"ICU","county":"台北市"}]},"臺北市立萬芳醫院－委託財團法人臺北醫學大學辦理":{"count":3,"county":"台北市","records":[{"date":"2023-04-02","phone":"(02)29307930分機2603","contact":"林醫師0919260148","unit":"ICU","county":"台北市"},{"date":"2023-02-24","phone":"(02)29307930分機2603","contact":"趙醫師0970746728","unit":"ICU","county":"台北市"},{"date":"2022-11-18","phone":"(02)29307930分機2603","contact":"王錦莉","unit":"ICU","county":"台北市"}]},"臺北醫學大學附設醫院":{"count":5,"county":"台北市","records":[{"date":"2022-11-02","phone":"(02)27372181分機8535","contact":"Dr廖","unit":"ICU","county":"台北市"},{"date":"2021-04-03","phone":"0977-350-263","contact":"蘇一宇","unit":"ICU","county":"台北市"},{"date":"2021-01-06","phone":"(02)2737-2181#8533","contact":"蘇一宇","unit":"ICU","county":"台北市"},{"date":"2020-05-20","phone":"(02)27372181分機8533","contact":"蘇一宇醫師","unit":"ICU","county":"台北市"},{"date":"2019-12-24","phone":"0978056500","contact":"黃醫師","unit":"ICU","county":"台北市"}]},"臺灣基督教門諾會醫療財團法人門諾醫院":{"count":17,"county":"花蓮","records":[{"date":"2025-07-21","phone":"(03)8241234分機1370","contact":"Nr.","unit":"ICU","county":"花蓮"},{"date":"2025-03-13","phone":"(03)8241370(NBC專線)","contact":"吳醫師0927378438","unit":"ICU","county":"花蓮"},{"date":"2025-03-11","phone":"(03)8241370_NICU專線","contact":"吳醫師0927378438","unit":"ICU","county":"花蓮"},{"date":"2024-05-24","phone":"(03)8241371_NICU專線","contact":"護理師","unit":"ICU","county":"花蓮"},{"date":"2023-09-14","phone":"(03)8241370NICU專線","contact":"NP林","unit":"ICU","county":"花蓮"},{"date":"2023-06-21","phone":"(03)8241370","contact":"Nr.陳","unit":"baby room","county":"花蓮"},{"date":"2023-03-25","phone":"(03)8241370","contact":"周醫師","unit":"ICU","county":"花蓮"},{"date":"2022-08-29","phone":"(03)8241370","contact":"NP陳","unit":"ICU","county":"花蓮"},{"date":"2022-06-27","phone":"(03)7063166","contact":"NP陳","unit":"ICU","county":"花蓮"},{"date":"2022-04-06","phone":"(03)8241370","contact":"NP","unit":"ICU","county":"花蓮"}]},"良品婦幼聯合診所":{"count":2,"county":"新北市","records":[{"date":"2020-02-14","phone":"29650111","contact":"焦醫師","unit":"baby room","county":"新北市"},{"date":"2020-01-23","phone":"(02)29650111#821","contact":"焦醫師","unit":"baby room","county":"新北市"}]},"英倫產後護理之家":{"count":1,"county":"台北市","records":[{"date":"2021-06-01","phone":"02-27788618","contact":"翁醫師","unit":"baby room","county":"台北市"}]},"菡生婦幼診所":{"count":47,"county":"新北市","records":[{"date":"2025-12-23","phone":"(02)29518999分機600","contact":"護理師","unit":"baby room","county":"新北市"},{"date":"2025-12-15","phone":"(02)29518999分機600","contact":"Nr.","unit":"baby room","county":"新北市"},{"date":"2025-11-30","phone":"(02)2951899分機600","contact":"張護理師","unit":"baby room","county":"新北市"},{"date":"2025-11-26","phone":"(02)29518999分機600","contact":"呂護理師","unit":"baby room","county":"新北市"},{"date":"2025-11-23","phone":"(02)29518999分機600","contact":"護理師","unit":"baby room","county":"新北市"},{"date":"2025-11-08","phone":"(02)29518999分機600","contact":"護理師","unit":"baby room","county":"新北市"},{"date":"2025-10-10","phone":"02-2951-8999#600","contact":"郭護理師","unit":"baby room","county":"新北市"},{"date":"2025-09-27","phone":"(02)29518999分機600","contact":"張護理師","unit":"baby room","county":"新北市"},{"date":"2025-09-03","phone":"(02)29518999分機600","contact":"Nr.","unit":"baby room","county":"新北市"},{"date":"2025-08-22","phone":"02-29518999","contact":"護理師","unit":"baby room","county":"新北市"}]},"蕙生婦幼醫院":{"count":1,"county":"新北市","records":[{"date":"2019-05-02","phone":"32346688#203","contact":"李小姐","unit":"baby room","county":"新北市"}]},"蕙生醫院":{"count":3,"county":"新北市","records":[{"date":"2023-10-27","phone":"(02)22236339分機203","contact":"吳仲義","unit":"baby room","county":"新北市"},{"date":"2023-09-11","phone":"(02)22236339分機203","contact":"Nr.","unit":"baby room","county":"新北市"},{"date":"2022-12-09","phone":"(02)22236339分機203","contact":"Nr","unit":"baby room","county":"新北市"}]},"行天宮醫療志業醫療財團法人恩主公醫院":{"count":18,"county":"新北市","records":[{"date":"2025-08-16","phone":"(02)26723456分機6955","contact":"涂NP","unit":"ICU","county":"新北市"},{"date":"2024-06-03","phone":"(02)26723456分機6951_PICU","contact":"NP王小姐","unit":"ICU","county":"新北市"},{"date":"2023-11-14","phone":"(02)26723456分機6951","contact":"NP","unit":"ICU","county":"新北市"},{"date":"2023-10-01","phone":"(02)26723456分機6951,6918(PICU)","contact":"賴醫師","unit":"ICU","county":"新北市"},{"date":"2023-07-14","phone":"02-26723456#6918","contact":"NP塗","unit":"ICU","county":"新北市"},{"date":"2023-05-09","phone":"(02)26723456分機6955","contact":"NP王","unit":"ICU","county":"新北市"},{"date":"2022-12-01","phone":"(02)26723456分機6951","contact":"NP王小姐","unit":"ICU","county":"新北市"},{"date":"2022-09-08","phone":"02-26723456#6918","contact":"王專科護理師","unit":"ICU","county":"新北市"},{"date":"2022-08-12","phone":"(02)26723456分機6951","contact":"NP","unit":"中重度病房","county":"新北市"},{"date":"2021-10-18","phone":"02-26723456#6918","contact":"塗NP","unit":"ICU","county":"新北市"}]},"衛生福利部桃園醫院":{"count":12,"county":"桃園","records":[{"date":"2025-12-19","phone":"(03)3699721分機3381(第三加護病房)MICU","contact":"NP謝小姐","unit":"ICU","county":"桃園"},{"date":"2025-08-19","phone":"(03)3699721分機3559","contact":"藍醫師0975176238","unit":"ICU","county":"桃園"},{"date":"2025-06-03","phone":"(03)3699721分機3665_5樓NICU","contact":"呂醫師/Nr","unit":"ICU","county":"桃園"},{"date":"2025-04-11","phone":"(03)3699721分機3556","contact":"卓醫師0933621088","unit":"ICU","county":"桃園"},{"date":"2025-02-06","phone":"(03)3699721","contact":"潘醫師0928233735","unit":"ICU","county":"桃園"},{"date":"2024-07-23","phone":"(03_3699721分機3552","contact":"李瑞文醫師0928872899","unit":"ICU","county":"桃園"},{"date":"2023-01-17","phone":"(03)3699721","contact":"周醫師0988156511","unit":"ICU","county":"桃園"},{"date":"2022-08-17","phone":"(03)3699721分機3551","contact":"NP王小姐","unit":"ICU","county":"桃園"},{"date":"2021-12-27","phone":"03-3699721#3552","contact":"呂醫師","unit":"ICU","county":"桃園"},{"date":"2021-11-25","phone":"09-3699721轉3551","contact":"張醫師","unit":"ICU","county":"桃園"}]},"衛生福利部臺北醫院":{"count":3,"county":"新北市","records":[{"date":"2024-12-05","phone":"(02)2765566","contact":"張一凡醫師0920966298","unit":"急診","county":"新北市"},{"date":"2024-07-15","phone":"(02)22765566分機2562","contact":"黃NP","unit":"ICU","county":"新北市"},{"date":"2020-11-20","phone":"22765566轉2562","contact":"王怡人醫師","unit":"baby room","county":"新北市"}]},"衛生福利部金門醫院":{"count":1,"county":"台北市","records":[{"date":"2021-02-05","phone":"0972609957","contact":"Dr.黃","unit":"松山機場","county":"台北市"}]},"衛生福利部雙和醫院":{"count":5,"county":"新北市","records":[{"date":"2021-07-05","phone":"02-22490088","contact":"陳醫師","unit":"NBC","county":"新北市"},{"date":"2020-08-12","phone":"(02)22490088分機2660","contact":"邱醫師","unit":"ICU","county":"新北市"},{"date":"2020-05-07","phone":"22490088","contact":"林醫師","unit":"ICU","county":"新北市"},{"date":"2019-10-14","phone":"02-22490088#2660","contact":"林醫師","unit":"ICU","county":"新北市"},{"date":"2019-05-30","phone":"02-2490088-2660","contact":"林醫生","unit":"ICU","county":"新北市"}]},"衛生福利部雙和醫院(委託臺北醫學大學興建經營)":{"count":15,"county":"新北市","records":[{"date":"2025-11-10","phone":"(02)22490088分機2660","contact":"何醫師","unit":"ICU","county":"新北市"},{"date":"2024-09-28","phone":"(02)22490088分機2660","contact":"吳醫師","unit":"ICU","county":"新北市"},{"date":"2024-05-27","phone":"(02)66201188分機266.","contact":"汪醫師","unit":"ICU","county":"新北市"},{"date":"2024-05-12","phone":"(02)22490088","contact":"汪醫師0970747566","unit":"ICU","county":"新北市"},{"date":"2023-05-28","phone":"(02)22490088分機2600","contact":"值班人員","unit":"ICU","county":"新北市"},{"date":"2023-02-11","phone":"(02)22490088","contact":"施醫師0901054016","unit":"ICU","county":"新北市"},{"date":"2023-01-16","phone":"(02)22490088","contact":"鄧醫師0979876305","unit":"ICU","county":"新北市"},{"date":"2022-12-14","phone":"(02)22490088分機2660","contact":"Dr汪","unit":"ICU","county":"新北市"},{"date":"2022-12-09","phone":"(02)22490288分機2600","contact":"Dr汪","unit":"ICU","county":"新北市"},{"date":"2022-11-09","phone":"(02)22490088分機2660","contact":"Dr鄧","unit":"ICU","county":"新北市"}]},"豐禾婦產科診所":{"count":2,"county":"新北市","records":[{"date":"2024-02-06","phone":"(02)85910666分機600","contact":"尤醫師/護理師","unit":"baby room","county":"新北市"},{"date":"2021-09-03","phone":"02-8951-6666","contact":"簡醫師","unit":"baby room","county":"新北市"}]},"豐禾產後護理之家":{"count":1,"county":"新北市","records":[{"date":"2023-01-06","phone":"(02)89516666分機600(BR)","contact":"當班醫療人員","unit":"baby room","county":"新北市"}]},"財團法人私立高雄醫學大學附設中和紀念醫院":{"count":8,"county":"高雄","records":[{"date":"2025-06-20","phone":"(07)7334553_NICU專線","contact":"曾醫師0979777960","unit":"ICU","county":"高雄"},{"date":"2025-04-24","phone":"(07)3121101分機6525(5F_NICU)","contact":"郭醫師","unit":"ICU","county":"高雄"},{"date":"2025-03-24","phone":"(07)3121101分機6502_5AC(SBR)","contact":"郭醫師","unit":"ICU","county":"高雄"},{"date":"2025-03-17","phone":"(07)3121101分機6488(5F_PICU)","contact":"吳醫師0978635526","unit":"ICU","county":"高雄"},{"date":"2024-10-07","phone":"(07)3121101分機6488","contact":"張醫師/值班人員","unit":"ICU","county":"高雄"},{"date":"2024-06-05","phone":"(07)3208201","contact":"林醫師/NP","unit":"ICU","county":"高雄"},{"date":"2023-10-04","phone":"(07)3121101分機6488(5F_PICU)","contact":"NP張小姐","unit":"ICU","county":"高雄"},{"date":"2023-09-15","phone":"(07)3121101","contact":"NP","unit":"ICU","county":"高雄"}]},"財團法人私立高雄醫學大學附設醫院":{"count":2,"county":"高雄","records":[{"date":"2021-07-03","phone":"07-3121101#6488","contact":"張NP","unit":"ICU","county":"高雄"},{"date":"2021-03-03","phone":"0978636526","contact":"吳醫師","unit":"ICU","county":"高雄"}]},"輔仁大學學校財團法人輔仁大學附設醫院":{"count":18,"county":"新北市","records":[{"date":"2023-12-21","phone":"(02)85128888分機28865","contact":"簡佑軒醫師","unit":"ICU","county":"新北市"},{"date":"2023-11-23","phone":"(02)85128888分機28865","contact":"VS簡佑軒/R吳醫師","unit":"ICU","county":"新北市"},{"date":"2023-10-20","phone":"(02)85128888分機28865(NICU)","contact":"VS簡0905302012/李醫師","unit":"ICU","county":"新北市"},{"date":"2023-05-12","phone":"(02)85128888分機28893NBC","contact":"吳醫師","unit":"ICU","county":"新北市"},{"date":"2023-02-21","phone":"(02)85128888","contact":"吳醫師0988004076","unit":"ICU","county":"新北市"},{"date":"2023-02-09","phone":"(02)85128888分機25160","contact":"NP0905302389","unit":"ICU","county":"新北市"},{"date":"2022-10-19","phone":"(02)85128888分機28865","contact":"NP陳小姐","unit":"ICU","county":"新北市"},{"date":"2022-09-12","phone":"0905302322","contact":"NP劉","unit":"ICU","county":"新北市"},{"date":"2022-08-18","phone":"(02)85128888分機28865","contact":"Dr簡","unit":"ICU","county":"新北市"},{"date":"2021-06-07","phone":"02-85128888","contact":"NP","unit":"ICU","county":"新北市"}]},"遠華婦產科診所":{"count":2,"county":"新北市","records":[{"date":"2019-02-27","phone":"02-89535508 #310","contact":"陳小姐","unit":"產房","county":"新北市"},{"date":"2019-02-27","phone":"02-89535508 #310","contact":"陳小姐","unit":"產房","county":"新北市"}]},"醫療財團法人徐元智先生醫藥基金會亞東紀念醫院":{"count":18,"county":"新北市","records":[{"date":"2024-11-01","phone":"(02)7728451(NICU專線)","contact":"李家容醫師","unit":"ICU","county":"新北市"},{"date":"2023-02-07","phone":"(02)89667000","contact":"王柏元醫師0921921268","unit":"ICU","county":"新北市"},{"date":"2023-01-28","phone":"(02)89667000","contact":"林醫師0978990253","unit":"ICU","county":"新北市"},{"date":"2022-09-04","phone":"(02)8966-7000","contact":"李如浩","unit":"急診","county":"新北市"},{"date":"2021-12-16","phone":"0911-801-781","contact":"洪醫師","unit":"ICU","county":"新北市"},{"date":"2020-11-19","phone":"02-8966-7000轉4451","contact":"陳醫師","unit":"ICU","county":"新北市"},{"date":"2020-11-03","phone":"02-8966-7000#4451","contact":"R2 李","unit":"ICU","county":"新北市"},{"date":"2020-09-23","phone":"02-8966-7000","contact":"馮醫生","unit":"NOR","county":"新北市"},{"date":"2020-05-19","phone":"7728-4451","contact":"李佳容醫師","unit":"ICU","county":"新北市"},{"date":"2020-03-05","phone":"(02)77284452","contact":"林醫師","unit":"ICU","county":"新北市"}]},"醫療財團法人羅許基金會羅東博愛醫院":{"count":2,"county":"宜蘭","records":[{"date":"2025-05-29","phone":"(03)9543131分機2079","contact":"NP","unit":"ICU","county":"宜蘭"},{"date":"2025-05-26","phone":"(03)3543131分機2079(10F_PICU)","contact":"張永青醫師","unit":"ICU","county":"宜蘭"}]},"醫療財團法人辜公亮基金會和信治癌中心醫院":{"count":1,"county":"台北市","records":[{"date":"2025-07-05","phone":"(02)28970011","contact":"鄭醫師0983738162","unit":"ICU","county":"台北市"}]},"采新婦幼診所":{"count":2,"county":"新北市","records":[{"date":"2024-05-25","phone":"(02)89853888#300","contact":"吳醫師","unit":"baby room","county":"新北市"},{"date":"2024-05-25","phone":"(02)89538888#300","contact":"吳醫師","unit":"baby room","county":"新北市"}]},"錫安婦產科內科診所":{"count":2,"county":"新北市","records":[{"date":"2020-06-18","phone":"02-29812299轉202","contact":"張醫師","unit":"baby room","county":"新北市"},{"date":"2019-09-18","phone":"(02)8985-2088","contact":"張醫師","unit":"產房","county":"新北市"}]},"鍾婦產科診所":{"count":2,"county":"新北市","records":[{"date":"2023-06-22","phone":"(02)89288899","contact":"林護理師","unit":"baby room","county":"新北市"},{"date":"2022-07-04","phone":"(02)8928-8899","contact":"Nr林","unit":"baby room","county":"新北市"}]},"長庚醫療財團法人台北長庚紀念醫院":{"count":2,"county":"台北市","records":[{"date":"2024-03-11","phone":"(02)27135211分機3357","contact":"陳醫師","unit":"ICU","county":"台北市"},{"date":"2024-01-03","phone":"(02)27135211","contact":"徐醫師","unit":"急診","county":"台北市"}]},"長庚醫療財團法人嘉義長庚紀念醫院":{"count":3,"county":"嘉義","records":[{"date":"2024-01-30","phone":"(05)3621000分機3136","contact":"陳醫師","unit":"ICU","county":"嘉義"},{"date":"2023-04-28","phone":"(05)3621000分機3135","contact":"陳醫師","unit":"ICU","county":"嘉義"},{"date":"2022-01-12","phone":"0978835115","contact":"陳醫師","unit":"ICU","county":"嘉義"}]},"長庚醫療財團法人基隆長庚紀念醫院":{"count":1,"county":"基隆","records":[{"date":"2024-09-10","phone":"(02)245313131分機2600","contact":"曾醫師0965853650/值班醫師","unit":"ICU","county":"基隆"}]},"長庚醫療財團法人林口長庚紀念醫院":{"count":31,"county":"桃園","records":[{"date":"2025-11-06","phone":"(03)3281200分機8500(2F_PICU)","contact":"林醫師","unit":"ICU","county":"桃園"},{"date":"2025-07-28","phone":"(03)3281200分機5817_5F NBC II","contact":"許醫師","unit":"ICU","county":"桃園"},{"date":"2025-04-07","phone":"(03)3281200分機8511_5樓NICU-II","contact":"許醫師","unit":"ICU","county":"桃園"},{"date":"2025-02-24","phone":"(03)3281200分機8503(NICU-1_L棟3樓)","contact":"王醫師","unit":"ICU","county":"桃園"},{"date":"2025-02-11","phone":"(03)3281200分機8500","contact":"陳愛華醫師0975366657","unit":"ICU","county":"桃園"},{"date":"2025-01-14","phone":"(03)3281200分機8511(NICU II)","contact":"住院醫師/護理師","unit":"ICU","county":"桃園"},{"date":"2024-10-12","phone":"(03)3281200分機8512","contact":"張醫師","unit":"ICU","county":"桃園"},{"date":"2024-06-25","phone":"(03)3281200分機","contact":"賴醫師/主護","unit":"ICU","county":"桃園"},{"date":"2024-03-11","phone":"(03)3211200分機8501","contact":"林建志醫師0975365949","unit":"ICU","county":"桃園"},{"date":"2023-07-26","phone":"(03)3281200分機8511","contact":"王醫師0978989072","unit":"ICU","county":"桃園"}]},"長庚醫療財團法人高雄長庚紀念醫院":{"count":1,"county":"高雄","records":[{"date":"2022-04-18","phone":"(07)7317123分機8601","contact":"劉熙韻醫師","unit":"ICU","county":"高雄"}]},"雷世陽婦產科診所":{"count":3,"county":"新北市","records":[{"date":"2022-11-01","phone":"(02)89535508分機310","contact":"BR","unit":"baby room","county":"新北市"},{"date":"2020-06-15","phone":"89535508*310","contact":"陳護理師","unit":"baby room","county":"新北市"},{"date":"2019-05-12","phone":"0289535508","contact":"陳護理師","unit":"baby room","county":"新北市"}]},"高雄榮民總醫院":{"count":6,"county":"高雄","records":[{"date":"2024-06-04","phone":"(07)3468198_PICU專線","contact":"吳醫師","unit":"ICU","county":"高雄"},{"date":"2024-05-08","phone":"(07)3468198(PICU專線)","contact":"蕭醫師","unit":"ICU","county":"高雄"},{"date":"2023-08-09","phone":"(07)3422121分機78194(SBR病嬰室)","contact":"D賴/值班醫師","unit":"ICU","county":"高雄"},{"date":"2023-05-03","phone":"(07)3468198(PICU專線)","contact":"葉醫師","unit":"ICU","county":"高雄"},{"date":"2021-10-25","phone":"07-3422121#78198","contact":"劉醫師","unit":"ICU","county":"高雄"},{"date":"2020-12-28","phone":"07-3468198","contact":"游醫師","unit":"ICU","county":"高雄"}]},"高雄醫學大學附設中和紀念醫院":{"count":3,"county":"高雄","records":[{"date":"2022-03-23","phone":"(07)3208201NICU專線","contact":"住院醫師或NP","unit":"ICU","county":"高雄"},{"date":"2022-03-17","phone":"(07)312-1101分機6488 or 0903902936","contact":"藍醫師","unit":"ICU","county":"高雄"},{"date":"2019-11-16","phone":"(07)3121101#6488","contact":"劉醫師","unit":"ICU","county":"高雄"}]}};
+
+const ALL_NAMES = Object.keys(DB);
+
+// eastern counties that need earthquake alert
+const EAST_COUNTIES = ['花蓮','台東','宜蘭'];
+
+// ── Clock ──
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('clock').textContent = `${h}:${m}:${s}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── Search logic ──
+const searchInput = document.getElementById('search-input');
+const suggestionsEl = document.getElementById('suggestions');
+let selectedName = null;
+
+searchInput.addEventListener('input', () => {
+  const q = searchInput.value.trim();
+  if (!q) { hideSuggestions(); return; }
+
+  const matches = ALL_NAMES.filter(n => n.includes(q)).slice(0, 12);
+  if (!matches.length) { hideSuggestions(); return; }
+
+  suggestionsEl.innerHTML = matches.map(name => {
+    const hl = name.replace(q, `<mark>${q}</mark>`);
+    return `<div class="suggestion-item" onclick="selectHospital('${name.replace(/'/g,"\\'")}')">
+      <span class="suggestion-name">${hl}</span>
+      <span class="suggestion-count">${DB[name].count} 次</span>
+    </div>`;
+  }).join('');
+  suggestionsEl.classList.add('open');
+});
+
+searchInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSearch();
+  if (e.key === 'Escape') hideSuggestions();
+});
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.search-input-wrap')) hideSuggestions();
+});
+
+function hideSuggestions() {
+  suggestionsEl.classList.remove('open');
+}
+
+function selectHospital(name) {
+  searchInput.value = name;
+  selectedName = name;
+  hideSuggestions();
+  showResult(name);
+}
+
+function doSearch() {
+  const q = searchInput.value.trim();
+  if (!q) return;
+  hideSuggestions();
+
+  // exact match first
+  if (DB[q]) { showResult(q); return; }
+
+  // fuzzy: pick first partial match
+  const match = ALL_NAMES.find(n => n.includes(q));
+  if (match) { showResult(match); return; }
+
+  // not found
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('result-area').classList.add('visible');
+  document.getElementById('result-content').innerHTML = `
+    <div class="no-result">
+      <h3>找不到「${q}」的出勤紀錄</h3>
+      <p>這可能是從未出勤過的院所，可在未來出勤後加入資料庫。</p>
+    </div>`;
+}
+
+function clearSearch() {
+  searchInput.value = '';
+  selectedName = null;
+  hideSuggestions();
+  document.getElementById('result-area').classList.remove('visible');
+  document.getElementById('empty-state').style.display = '';
+  document.getElementById('result-content').innerHTML = '';
+}
+
+function showResult(name) {
+  const hosp = DB[name];
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('result-area').classList.add('visible');
+
+  const isEast = EAST_COUNTIES.includes(hosp.county);
+  const eastWarn = isEast ? `<span class="tag warn">⚠ 東部任務</span>` : '';
+
+  // unique units
+  const units = [...new Set(hosp.records.map(r => r.unit).filter(Boolean))];
+  const unitTags = units.slice(0,4).map(u => `<span class="tag">${u}</span>`).join('');
+
+  // phone records HTML
+  const phoneHTML = hosp.records.map(r => `
+    <div class="phone-record">
+      <div class="phone-date">${r.date}</div>
+      <div class="phone-details">
+        <div class="phone-number">${r.phone || '—'}</div>
+        <div class="phone-contact">${r.contact || '—'}</div>
+      </div>
+      <div class="phone-unit">${r.unit || '—'}</div>
+    </div>
+  `).join('');
+
+  // Time stats block
+  const t = TIME_DB[name];
+  let timeStatsHTML = '';
+  if (t) {
+    const maxStayDisplay = (t.max_stay && t.max_stay < 1000)
+      ? `${t.max_stay}`
+      : null;
+    const maxStayDateDisplay = (maxStayDisplay && t.max_stay_date)
+      ? t.max_stay_date
+      : null;
+
+    timeStatsHTML = `
+    <div class="time-stats">
+      <div class="time-stat-cell">
+        <div class="time-stat-label">平均去程時間</div>
+        <div class="time-stat-value">${t.avg_go}<span> 分鐘</span></div>
+        <div class="time-stat-sub">台大兒童 → 該院</div>
+      </div>
+      <div class="time-stat-cell">
+        <div class="time-stat-label">平均外院停留時間</div>
+        <div class="time-stat-value">${t.avg_stay}<span> 分鐘</span></div>
+        <div class="time-stat-sub">歷史平均值</div>
+      </div>
+      <div class="time-stat-cell${maxStayDisplay ? ' highlight' : ''}">
+        <div class="time-stat-label">最長停留紀錄</div>
+        <div class="time-stat-value">${maxStayDisplay ? maxStayDisplay + '<span> 分鐘</span>' : '<span style="font-size:14px">—</span>'}</div>
+        <div class="time-stat-sub">${maxStayDateDisplay ? maxStayDateDisplay : '資料不足'}</div>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('result-content').innerHTML = `
+    <div class="hospital-header">
+      <div class="hospital-name-area">
+        <h2>${name}</h2>
+        <div class="tags">
+          <span class="tag accent">${hosp.county}</span>
+          ${unitTags}
+          ${eastWarn}
+        </div>
+      </div>
+      <div class="mission-count-box">
+        <div class="mission-count-num">${hosp.count}</div>
+        <div class="mission-count-label">歷史出勤次數</div>
+      </div>
+    </div>
+
+    ${timeStatsHTML}
+
+    <div class="info-grid">
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="card-header">
+          <div class="card-title">最近出勤紀錄（近 ${hosp.records.length} 筆）</div>
+        </div>
+        <div class="phone-list">${phoneHTML}</div>
+      </div>
+    </div>
+  `;
+}
+
+
+// ── CONFIG ──
+const MAPS_API_KEY = 'AIzaSyCLjGdhAYU2rmxDCpnhyq4r0L_sr_pvJoI';
+const CWA_API_KEY = 'CWA-B3D5458A-4530-4045-A702-27A786C1E934';
+const SHEETS_ID = '1y5oMPbBTpqIYuDQqlZbz8hkUS4mvrVwFeAEAc64KXgo';
+const SHEETS_API_KEY = MAPS_API_KEY; // same key
+const NTUCH_LAT = 25.0426;
+const NTUCH_LNG = 121.5184;
+const NTUCH_RADIUS_M = 200;
+
+const DEVICES = [
+  { id: '51579轉診手機', label: '51579轉診手機' },
+  { id: '轉診備用機',    label: '轉診備用機' }
+];
+
+let currentDestLat = null;
+let currentDestLng = null;
+let currentDestName = '';
+let currentDestCounty = '';
+let mapInstance = null;
+let locationInterval = null;
+
+// ── UTILS ──
+function haversine(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function formatTime(isoStr) {
+  const d = new Date(isoStr);
+  if (isNaN(d)) return isoStr;
+  return d.toLocaleString('zh-TW', {timeZone:'Asia/Taipei', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'});
+}
+
+function minsAgo(isoStr) {
+  const diff = (Date.now() - new Date(isoStr)) / 60000;
+  if (diff < 1) return '剛才';
+  if (diff < 60) return `${Math.round(diff)} 分鐘前`;
+  return `${Math.round(diff/60)} 小時前`;
+}
+
+// ── GOOGLE MAPS LOADER ──
+let mapsLoaded = false;
+function loadMapsAPI() {
+  if (mapsLoaded) return;
+  mapsLoaded = true;
+  const s = document.createElement('script');
+  s.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_API_KEY}&callback=onMapsReady&language=zh-TW`;
+  s.async = true;
+  document.head.appendChild(s);
+}
+
+window.onMapsReady = function() {
+  if (currentDestLat) renderMap();
+};
+
+function renderMap() {
+  if (!window.google) { loadMapsAPI(); return; }
+  const container = document.getElementById('map-container');
+  container.style.display = 'block';
+  const map = new google.maps.Map(container, {
+    zoom: 11,
+    center: { lat: (NTUCH_LAT + currentDestLat) / 2, lng: (NTUCH_LNG + currentDestLng) / 2 },
+    mapTypeControl: false, streetViewControl: false,
+    styles: [{ featureType:'poi', elementType:'labels', stylers:[{visibility:'off'}] }]
+  });
+  new google.maps.Marker({ position: {lat: NTUCH_LAT, lng: NTUCH_LNG}, map, title:'台大兒童醫院',
+    icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor:'#2c2825', fillOpacity:1, strokeWeight:2, strokeColor:'#fff' }
+  });
+  new google.maps.Marker({ position: {lat: currentDestLat, lng: currentDestLng}, map, title: currentDestName,
+    icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor:'#4a6741', fillOpacity:1, strokeWeight:2, strokeColor:'#fff' }
+  });
+  new google.maps.Polyline({
+    path: [{lat: NTUCH_LAT, lng: NTUCH_LNG}, {lat: currentDestLat, lng: currentDestLng}],
+    map, strokeColor:'#4a6741', strokeOpacity:0.4, strokeWeight:2
+  });
+  mapInstance = map;
+  fetchTravelTime();
+}
+
+// ── TRAVEL TIME ──
+async function fetchTravelTime() {
+  if (!currentDestLat) return;
+  try {
+    const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${NTUCH_LAT},${NTUCH_LNG}&destinations=${currentDestLat},${currentDestLng}&mode=driving&language=zh-TW&key=${MAPS_API_KEY}`;
+    // Use a CORS proxy approach via embed URL instead
+    const embedUrl = `https://www.google.com/maps/embed/v1/directions?key=${MAPS_API_KEY}&origin=${NTUCH_LAT},${NTUCH_LNG}&destination=${currentDestLat},${currentDestLng}&mode=driving&language=zh-TW`;
+    const container = document.getElementById('map-container');
+    container.innerHTML = '';
+    container.style.padding = '0';
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'width:100%;height:220px;border:none;border-radius:6px;';
+    iframe.src = embedUrl;
+    iframe.allowFullscreen = true;
+    container.appendChild(iframe);
+
+    // Get duration via Distance Matrix (needs backend, use embed for now)
+    const badge = document.getElementById('travel-time-badge');
+    badge.style.display = 'inline-block';
+    badge.textContent = '查看地圖導航';
+  } catch(e) {
+    console.error('Map error', e);
+  }
+}
+
+// ── WEATHER (CWA) ──
+const WEATHER_ICONS = {
+  '晴': '☀️', '多雲': '⛅', '陰': '☁️', '雨': '🌧️', '雷': '⛈️',
+  '霧': '🌫️', '雪': '❄️', '陣雨': '🌦️', '短暫雨': '🌦️'
+};
+
+function weatherIcon(desc) {
+  for (const [k, v] of Object.entries(WEATHER_ICONS)) {
+    if (desc.includes(k)) return v;
+  }
+  return '🌤️';
+}
+
+// County code mapping for CWA
+const COUNTY_CODES = {
+  '台北市':'F-D0047-061','新北市':'F-D0047-069','桃園':'F-D0047-005',
+  '新竹':'F-D0047-009','苗栗':'F-D0047-013','台中':'F-D0047-073',
+  '彰化':'F-D0047-017','南投':'F-D0047-021','雲林':'F-D0047-025',
+  '嘉義':'F-D0047-029','台南':'F-D0047-077','高雄':'F-D0047-065',
+  '屏東':'F-D0047-033','宜蘭':'F-D0047-001','花蓮':'F-D0047-041',
+  '台東':'F-D0047-037','基隆':'F-D0047-049','新竹市':'F-D0047-053',
+  '嘉義市':'F-D0047-057'
+};
+
+async function fetchWeather(county) {
+  const el = document.getElementById('weather-content');
+  const code = COUNTY_CODES[county] || 'F-D0047-061';
+  try {
+    const url = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/${code}?Authorization=${CWA_API_KEY}&elementName=WeatherDescription&timeFrom=now&limit=1`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const locations = data?.records?.Locations?.[0]?.Location;
+    if (!locations || !locations.length) throw new Error('no data');
+
+    // Pick first location
+    const loc = locations[0];
+    const wdEl = loc.WeatherElement?.find(e => e.ElementName === 'WeatherDescription');
+    const desc = wdEl?.Time?.[0]?.ElementValue?.[0]?.WeatherDescription || '';
+
+    // Parse: "晴時多雲；最高溫28度；降雨機率30%"
+    const parts = desc.split('；');
+    const sky = parts[0] || '—';
+    const temp = parts.find(p => p.includes('度')) || '';
+    const rain = parts.find(p => p.includes('降雨')) || '';
+
+    el.innerHTML = `
+      <div class="weather-row">
+        <div class="weather-icon">${weatherIcon(sky)}</div>
+        <div>
+          <div class="weather-main">${county}</div>
+          <div class="weather-desc">${sky}${temp ? '　' + temp : ''}${rain ? '　' + rain : ''}</div>
+        </div>
+      </div>`;
+  } catch(e) {
+    el.innerHTML = `<span style="color:var(--text-muted);font-size:12px;">天氣資料無法取得</span>`;
+  }
+}
+
+// ── EARTHQUAKE (CWA) ──
+async function fetchEarthquakes() {
+  const el = document.getElementById('quake-content');
+  try {
+    const url = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/E-A0015-001?Authorization=${CWA_API_KEY}&limit=5`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const quakes = data?.records?.Earthquake;
+    if (!quakes || !quakes.length) { el.innerHTML = '<span class="quake-none">近期無顯著地震</span>'; return; }
+
+    const now = Date.now();
+    const h48 = 48 * 3600 * 1000;
+    const recent = quakes.filter(q => {
+      const t = new Date(q.EarthquakeInfo?.OriginTime || 0).getTime();
+      return (now - t) < h48;
+    });
+
+    if (!recent.length) {
+      el.innerHTML = '<span class="quake-none">✓ 近48小時無顯著地震</span>';
+      return;
+    }
+
+    el.innerHTML = recent.map(q => {
+      const info = q.EarthquakeInfo || {};
+      const mag = parseFloat(info.EarthquakeMagnitude?.MagnitudeValue || 0);
+      const loc = info.Epicenter?.Location || '—';
+      const time = formatTime(info.OriginTime || '');
+      const isBig = mag >= 4;
+      return `<div class="quake-item">
+        <span class="quake-mag${isBig ? ' big' : ''}">${isBig ? '⚠ ' : ''}規模 ${mag.toFixed(1)}</span>
+        <div class="quake-loc">${loc}</div>
+        <div class="quake-time">${time}</div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = '<span style="color:var(--text-muted);font-size:12px;">地震資料無法取得</span>';
+  }
+}
+
+// ── GEOCODE HOSPITAL ──
+async function geocodeHospital(name, county) {
+  return new Promise((resolve) => {
+    if (!window.google) { resolve(null); return; }
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ address: name + ' ' + county + ' 台灣', region: 'TW' }, (results, status) => {
+      if (status === 'OK' && results[0]) {
+        const loc = results[0].geometry.location;
+        resolve({ lat: loc.lat(), lng: loc.lng() });
+      } else {
+        resolve(null);
+      }
+    });
+  });
+}
+
+// ── LOCATION TRACKING ──
+async function fetchSheetLocation(sheetName) {
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${SHEETS_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+    const res = await fetch(url);
+    const text = await res.text();
+    // gviz returns: google.visualization.Query.setResponse({...})
+    const jsonStr = text.replace(/^[^(]+\(/, '').replace(/\);?$/, '');
+    const data = JSON.parse(jsonStr);
+    const rows = data?.table?.rows || [];
+    // Find last row with lat/lng (col B=1, C=2)
+    for (let i = rows.length - 1; i >= 0; i--) {
+      const row = rows[i].c;
+      const latVal = row?.[1]?.v;
+      const lngVal = row?.[2]?.v;
+      if (latVal && lngVal) {
+        // Time col (A=0) may be a Date object from gviz
+        let timeStr = row?.[0]?.v || '';
+        if (typeof timeStr === 'string' && timeStr.startsWith('Date(')) {
+          // gviz date format: Date(2026,3,6,10,30,0)
+          const parts = timeStr.replace('Date(','').replace(')','').split(',').map(Number);
+          const d = new Date(parts[0], parts[1], parts[2], parts[3]||0, parts[4]||0, parts[5]||0);
+          timeStr = d.toISOString();
+        }
+        return {
+          time: timeStr,
+          lat: parseFloat(latVal),
+          lng: parseFloat(lngVal),
+          acc: parseFloat(row?.[3]?.v || 0)
+        };
+      }
+    }
+  } catch(e) { console.error('Sheets error', e); }
+  return null;
+}
+
+async function updateLocationDisplay() {
+  const el = document.getElementById('location-status-box');
+  const timeEl = document.getElementById('location-update-time');
+  const pulse = document.getElementById('location-pulse');
+
+  const results = await Promise.all(DEVICES.map(d => fetchSheetLocation(d.id)));
+  const now = Date.now();
+
+  let activeDevices = [];
+  let allInside = true;
+
+  for (let i = 0; i < DEVICES.length; i++) {
+    const d = DEVICES[i];
+    const r = results[i];
+    if (!r) continue;
+
+    const dist = haversine(r.lat, r.lng, NTUCH_LAT, NTUCH_LNG);
+    const isOutside = dist > NTUCH_RADIUS_M;
+    const dataAge = now - new Date(r.time).getTime();
+    const isRecent = dataAge < 10 * 60 * 1000; // 10 mins
+
+    if (isOutside) allInside = false;
+    if (isOutside || !isRecent) {
+      activeDevices.push({ ...d, r, dist, isOutside, isRecent });
+    }
+  }
+
+  // Update timestamp
+  const latestTime = results.filter(Boolean).map(r => new Date(r.time)).sort((a,b) => b-a)[0];
+  if (latestTime) {
+    timeEl.textContent = `最後更新 ${minsAgo(latestTime.toISOString())}`;
+  }
+
+  // Determine display
+  const outsideDevices = activeDevices.filter(d => d.isOutside && d.isRecent);
+
+  if (outsideDevices.length === 0) {
+    // All inside or no data
+    pulse.className = 'pulse-dot idle';
+    el.innerHTML = `<div class="no-mission">
+      <div style="font-size:20px;margin-bottom:6px;">🏥</div>
+      <div>目前沒有出勤任務</div>
+      <div style="font-size:11px;margin-top:4px;color:var(--text-light);">兩支手機皆在台大兒童醫院範圍內</div>
+    </div>`;
+    return;
+  }
+
+  // Show outside devices
+  pulse.className = 'pulse-dot active';
+
+  // Reverse geocode each outside device
+  const html = await Promise.all(outsideDevices.map(async (d) => {
+    let address = `${d.r.lat.toFixed(4)}, ${d.r.lng.toFixed(4)}`;
+    try {
+      if (window.google) {
+        const geocoder = new google.maps.Geocoder();
+        await new Promise((resolve) => {
+          geocoder.geocode({ location: { lat: d.r.lat, lng: d.r.lng }, language: 'zh-TW' }, (results, status) => {
+            if (status === 'OK' && results[0]) {
+              const components = results[0].address_components;
+              const route = components.find(c => c.types.includes('route'))?.long_name || '';
+              const area = components.find(c => c.types.includes('sublocality_level_1'))?.long_name || '';
+              const city = components.find(c => c.types.includes('administrative_area_level_1'))?.long_name || '';
+              address = [city, area, route].filter(Boolean).join(' ');
+            }
+            resolve();
+          });
+        });
+      }
+    } catch(e) {}
+
+    const distText = d.dist > 1000 ? `${(d.dist/1000).toFixed(1)} km` : `${Math.round(d.dist)} m`;
+    return `<div class="location-device">
+      <div class="loc-badge out">出勤中</div>
+      <div class="loc-info">
+        <div class="loc-name">${d.label}</div>
+        <div class="loc-address">📍 ${address}</div>
+        <div class="loc-time">距台大兒童 ${distText}　${minsAgo(d.r.time)}</div>
+      </div>
+    </div>`;
+  }));
+
+  el.innerHTML = html.join('');
+}
+
+// ── INIT & INTERVAL ──
+function startLiveUpdates() {
+  updateLocationDisplay();
+  fetchEarthquakes();
+  if (locationInterval) clearInterval(locationInterval);
+  locationInterval = setInterval(updateLocationDisplay, 2 * 60 * 1000); // every 2 mins
+}
+
+// Override showResult to also trigger live features
+const _origShowResult = showResult;
+window.showResult = async function(name) {
+  _origShowResult(name);
+  const hosp = DB[name];
+  currentDestName = name;
+  currentDestCounty = hosp.county || '台北市';
+
+  // Geocode the hospital
+  document.getElementById('map-container').innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;">地圖載入中…</div>';
+  const coords = await geocodeHospital(name, currentDestCounty);
+  if (coords) {
+    currentDestLat = coords.lat;
+    currentDestLng = coords.lng;
+    loadMapsAPI();
+    if (window.google) renderMap();
+  }
+
+  fetchWeather(currentDestCounty);
+};
+
+// Start on load
+document.addEventListener('DOMContentLoaded', () => {
+  loadMapsAPI(); // load early so geocoder is ready
+  startLiveUpdates();
+});
+
+</script>
+</body>
+</html>
