@@ -12,6 +12,7 @@
     --surface: #ffffff;
     --surface2: #f0ede8;
     --border: #e2ddd6;
+    
     --text: #2c2825;
     --text-muted: #9a9189;
     --text-light: #c4bfb8;
@@ -1148,17 +1149,18 @@ async function fetchWeather(county) {
     const wdEl = loc.WeatherElement?.find(e => e.ElementName === 'WeatherDescription');
     const desc = wdEl?.Time?.[0]?.ElementValue?.[0]?.WeatherDescription || '';
 
-    const parts = desc.split('；');
-    const sky = parts[0] || '—';
-    const temp = parts.find(p => p.includes('度')) || '';
-    const rain = parts.find(p => p.includes('降雨')) || '';
+    // 修正：同時支援句號「。」或分號「；」切割，以適應氣象署格式
+    const parts = desc.split(/。|；/); 
+    const sky = parts[0] ? parts[0].trim() : '—';
+    const temp = parts.find(p => p.includes('度')) ? parts.find(p => p.includes('度')).trim() : '';
+    const rain = parts.find(p => p.includes('降雨')) ? parts.find(p => p.includes('降雨')).trim() : '';
 
     el.innerHTML = `
       <div class="weather-row">
         <div class="weather-icon">${weatherIcon(sky)}</div>
         <div>
-          <div class="weather-main">${county}</div>
-          <div class="weather-desc">${sky}${temp ? '　' + temp : ''}${rain ? '　' + rain : ''}</div>
+          <div class="weather-main">${county} <span style="font-size: 14px; font-weight: normal; color: var(--text);">${sky}</span></div>
+          <div class="weather-desc">${temp}${temp && rain ? '　|　' : ''}${rain}</div>
         </div>
       </div>`;
   } catch(e) {
