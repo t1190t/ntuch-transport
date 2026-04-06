@@ -1069,47 +1069,78 @@ function renderMap() {
   if (!window.google) { loadMapsAPI(); return; }
   const container = document.getElementById('map-container');
   container.style.display = 'block';
+  container.style.height = '380px'; // 🌟 放大地圖
+  
   const map = new google.maps.Map(container, {
-    zoom: 11,
+    zoom: 12,
     center: { lat: (NTUCH_LAT + currentDestLat) / 2, lng: (NTUCH_LNG + currentDestLng) / 2 },
     mapTypeControl: false, streetViewControl: false,
     styles: [{ featureType:'poi', elementType:'labels', stylers:[{visibility:'off'}] }]
   });
+  
   new google.maps.Marker({ position: {lat: NTUCH_LAT, lng: NTUCH_LNG}, map, title:'台大兒童醫院',
     icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor:'#2c2825', fillOpacity:1, strokeWeight:2, strokeColor:'#fff' }
   });
   new google.maps.Marker({ position: {lat: currentDestLat, lng: currentDestLng}, map, title: currentDestName,
     icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor:'#4a6741', fillOpacity:1, strokeWeight:2, strokeColor:'#fff' }
   });
-  new google.maps.Polyline({
-    path: [{lat: NTUCH_LAT, lng: NTUCH_LNG}, {lat: currentDestLat, lng: currentDestLng}],
-    map, strokeColor:'#4a6741', strokeOpacity:0.4, strokeWeight:2
+
+  // 🌟 使用 DirectionsService 畫出真實導航路線
+  const directionsService = new google.maps.DirectionsService();
+  const directionsRenderer = new google.maps.DirectionsRenderer({
+    map: map,
+    suppressMarkers: true,
+    polylineOptions: { strokeColor: '#4a6741', strokeWeight: 4, strokeOpacity: 0.7 }
   });
+
+  directionsService.route({
+    origin: { lat: NTUCH_LAT, lng: NTUCH_LNG },
+    destination: { lat: currentDestLat, lng: currentDestLng },
+    travelMode: 'DRIVING'
+  }, (response, status) => {
+    if (status === 'OK') {
+      directionsRenderer.setDirections(response);
+    } else {
+      // 若路線規劃失敗，退回畫直線
+      new google.maps.Polyline({
+        path: [{lat: NTUCH_LAT, lng: NTUCH_LNG}, {lat: currentDestLat, lng: currentDestLng}],
+        map, strokeColor:'#4a6741', strokeOpacity:0.4, strokeWeight:2
+      });
+    }
+  });
+
   mapInstance = map;
   fetchTravelTime();
 }
 
 // ── TRAVEL TIME ──
 async function fetchTravelTime() {
-  if (!currentDestLat) return;
-  try {
-    // 修復了導航預覽畫面的官方網址格式
-    const embedUrl = `https://www.google.com/maps/embed/v1/directions?key=${MAPS_API_KEY}&origin=${NTUCH_LAT},${NTUCH_LNG}&destination=${currentDestLat},${currentDestLng}&mode=driving&language=zh-TW`;
-    const container = document.getElementById('map-container');
-    container.innerHTML = '';
-    container.style.padding = '0';
-    const iframe = document.createElement('iframe');
-    iframe.style.cssText = 'width:100%;height:220px;border:none;border-radius:6px;';
-    iframe.src = embedUrl;
-    iframe.allowFullscreen = true;
-    container.appendChild(iframe);
+  if (!currentDestLat || !window.google) return;
+  const badge = document.getElementById('travel-time-badge');
+  badge.style.display = 'inline-block';
+  badge.textContent = '計算車程中…';
+  badge.style.backgroundColor = 'var(--tag-bg)';
+  badge.style.color = 'var(--text-muted)';
+  badge.style.fontSize = '12px';
 
-    const badge = document.getElementById('travel-time-badge');
-    badge.style.display = 'inline-block';
-    badge.textContent = '查看地圖導航';
-  } catch(e) {
-    console.error('Map error', e);
-  }
+  // 🌟 使用 DistanceMatrix 取得精確預估時間
+  const service = new google.maps.DistanceMatrixService();
+  service.getDistanceMatrix({
+    origins: [{ lat: NTUCH_LAT, lng: NTUCH_LNG }],
+    destinations: [{ lat: currentDestLat, lng: currentDestLng }],
+    travelMode: 'DRIVING',
+    language: 'zh-TW'
+  }, (response, status) => {
+    if (status === 'OK' && response.rows[0].elements[0].status === 'OK') {
+      const durationText = response.rows[0].elements[0].duration.text;
+      badge.textContent = `預計抵達目的地需要 ${durationText}`;
+      badge.style.backgroundColor = 'var(--warn-light)';
+      badge.style.color = 'var(--warn)';
+      badge.style.fontWeight = '500';
+    } else {
+      badge.textContent = '無法取得車程';
+    }
+  });
 }
 
 // ── WEATHER (CWA) ──
@@ -1125,42 +1156,45 @@ function weatherIcon(desc) {
   return '🌤️';
 }
 
-const COUNTY_CODES = {
-  '台北市':'F-D0047-061','新北市':'F-D0047-069','桃園':'F-D0047-005',
-  '新竹':'F-D0047-009','苗栗':'F-D0047-013','台中':'F-D0047-073',
-  '彰化':'F-D0047-017','南投':'F-D0047-021','雲林':'F-D0047-025',
-  '嘉義':'F-D0047-029','台南':'F-D0047-077','高雄':'F-D0047-065',
-  '屏東':'F-D0047-033','宜蘭':'F-D0047-001','花蓮':'F-D0047-041',
-  '台東':'F-D0047-037','基隆':'F-D0047-049','新竹市':'F-D0047-053',
-  '嘉義市':'F-D0047-057'
+// 將你的醫院資料庫縣市對應到氣象署標準格式
+const CWA_CITY_MAP = {
+  '台北市':'臺北市', '新北市':'新北市', '桃園':'桃園市', '桃園市':'桃園市',
+  '新竹':'新竹市', '新竹市':'新竹市', '新竹縣':'新竹縣', '苗栗':'苗栗縣',
+  '台中':'臺中市', '台中市':'臺中市', '彰化':'彰化縣', '南投':'南投縣',
+  '雲林':'雲林縣', '嘉義':'嘉義市', '嘉義市':'嘉義市', '嘉義縣':'嘉義縣',
+  '台南':'臺南市', '高雄':'高雄市', '屏東':'屏東縣', '宜蘭':'宜蘭縣',
+  '花蓮':'花蓮縣', '台東':'臺東縣', '基隆':'基隆市'
 };
 
 async function fetchWeather(county) {
   const el = document.getElementById('weather-content');
-  const code = COUNTY_CODES[county] || 'F-D0047-061';
+  const cwaLocation = CWA_CITY_MAP[county] || '臺北市';
+  
   try {
-    const url = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/${code}?Authorization=${CWA_API_KEY}&elementName=WeatherDescription&timeFrom=now&limit=1`;
+    // 🌟 改用穩定度高的 F-C0032-001 (36小時天氣預報)
+    const url = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-C0032-001?Authorization=${CWA_API_KEY}&locationName=${encodeURIComponent(cwaLocation)}`;
     const res = await fetch(url);
     const data = await res.json();
-    const locations = data?.records?.Locations?.[0]?.Location;
-    if (!locations || !locations.length) throw new Error('no data');
+    const locs = data?.records?.location;
+    if (!locs || !locs.length) throw new Error('no data');
 
-    const loc = locations[0];
-    const wdEl = loc.WeatherElement?.find(e => e.ElementName === 'WeatherDescription');
-    const desc = wdEl?.Time?.[0]?.ElementValue?.[0]?.WeatherDescription || '';
+    const elements = locs[0].weatherElement;
+    const getVal = (name) => elements.find(e => e.elementName === name)?.time[0]?.parameter?.parameterName || '';
 
-    // 修正：同時支援句號「。」或分號「；」切割，以適應氣象署格式
-    const parts = desc.split(/。|；/); 
-    const sky = parts[0] ? parts[0].trim() : '—';
-    const temp = parts.find(p => p.includes('度')) ? parts.find(p => p.includes('度')).trim() : '';
-    const rain = parts.find(p => p.includes('降雨')) ? parts.find(p => p.includes('降雨')).trim() : '';
+    const wx = getVal('Wx'); // 天氣現象
+    const pop = getVal('PoP'); // 降雨機率
+    const minT = getVal('MinT'); // 最低溫
+    const maxT = getVal('MaxT'); // 最高溫
+
+    let tempText = (minT && maxT) ? `${minT}°C - ${maxT}°C` : `${minT || maxT || ''}°C`;
+    let rainText = pop ? `降雨機率 ${pop}%` : '';
 
     el.innerHTML = `
       <div class="weather-row">
-        <div class="weather-icon">${weatherIcon(sky)}</div>
+        <div class="weather-icon">${weatherIcon(wx)}</div>
         <div>
-          <div class="weather-main">${county} <span style="font-size: 14px; font-weight: normal; color: var(--text);">${sky}</span></div>
-          <div class="weather-desc">${temp}${temp && rain ? '　|　' : ''}${rain}</div>
+          <div class="weather-main">${county} <span style="font-size: 14px; font-weight: normal; color: var(--text);">${wx}</span></div>
+          <div class="weather-desc">${tempText}${tempText && rainText && tempText !== '°C' ? '　|　' : ''}${rainText}</div>
         </div>
       </div>`;
   } catch(e) {
@@ -1210,7 +1244,6 @@ async function fetchEarthquakes() {
 // ── GEOCODE HOSPITAL ──
 async function geocodeHospital(name, county) {
   return new Promise((resolve) => {
-    // 強化保護：確保地圖完全載入，沒載入就跳過，不讓整個系統死當
     if (!window.google || !window.google.maps || !window.google.maps.Geocoder) {
       resolve(null);
       return;
@@ -1242,7 +1275,6 @@ async function fetchSheetLocation(sheetName) {
       const latVal = row?.[1]?.v;
       const lngVal = row?.[2]?.v;
 
-      // 強化防呆：一定要確認抓下來的是真正的「數字」座標，而不是表格第一列的中文標題
       if (latVal && lngVal && !isNaN(parseFloat(latVal)) && !isNaN(parseFloat(lngVal))) {
         let timeStr = row?.[0]?.v || '';
         if (typeof timeStr === 'string' && timeStr.startsWith('Date(')) {
@@ -1281,7 +1313,7 @@ async function updateLocationDisplay() {
     const dist = haversine(r.lat, r.lng, NTUCH_LAT, NTUCH_LNG);
     const isOutside = dist > NTUCH_RADIUS_M;
     const dataAge = now - new Date(r.time).getTime();
-    const isRecent = dataAge < 10 * 60 * 1000; // 10 mins
+    const isRecent = dataAge < 10 * 60 * 1000;
 
     if (isOutside) allInside = false;
     if (isOutside || !isRecent) {
@@ -1289,7 +1321,6 @@ async function updateLocationDisplay() {
     }
   }
 
-  // 強化保護：剃除掉無效的時間格式
   const validTimes = results.filter(Boolean)
     .map(r => new Date(r.time))
     .filter(d => !isNaN(d.getTime()))
@@ -1353,10 +1384,10 @@ function startLiveUpdates() {
   updateLocationDisplay();
   fetchEarthquakes();
   if (locationInterval) clearInterval(locationInterval);
-  locationInterval = setInterval(updateLocationDisplay, 2 * 60 * 1000); // every 2 mins
+  locationInterval = setInterval(updateLocationDisplay, 2 * 60 * 1000); 
 }
 
-// 強化保護：用地圖發生錯誤時的防撞機制，確保不會拖累天氣功能
+// 🌟 修改：點擊查詢時就撐開地圖，並隱藏舊時間
 const _origShowResult = showResult;
 window.showResult = async function(name) {
   _origShowResult(name);
@@ -1364,7 +1395,12 @@ window.showResult = async function(name) {
   currentDestName = name;
   currentDestCounty = hosp.county || '台北市';
 
-  document.getElementById('map-container').innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;">地圖載入中…</div>';
+  const mapContainer = document.getElementById('map-container');
+  mapContainer.style.height = '380px'; // 點擊時同步撐開地圖
+  mapContainer.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;line-height:380px;">地圖載入中…</div>';
+  
+  const badge = document.getElementById('travel-time-badge');
+  badge.style.display = 'none';
 
   try {
     const coords = await geocodeHospital(name, currentDestCounty);
@@ -1374,14 +1410,13 @@ window.showResult = async function(name) {
       loadMapsAPI();
       if (window.google) renderMap();
     } else {
-      document.getElementById('map-container').innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;">地圖服務異常或尚未完全啟用</div>';
+      mapContainer.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;line-height:380px;">地圖服務異常或尚未完全啟用</div>';
     }
   } catch(e) {
     console.error("Map Error", e);
-    document.getElementById('map-container').innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;">地圖服務異常</div>';
+    mapContainer.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;line-height:380px;">地圖服務異常</div>';
   }
 
-  // 不管上面地圖成不成功，都會繼續幫你順利抓取天氣！
   fetchWeather(currentDestCounty);
 };
 
