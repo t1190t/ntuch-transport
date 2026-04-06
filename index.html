@@ -1092,8 +1092,7 @@ function renderMap() {
 async function fetchTravelTime() {
   if (!currentDestLat) return;
   try {
-    const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${NTUCH_LAT},${NTUCH_LNG}&destinations=${currentDestLat},${currentDestLng}&mode=driving&language=zh-TW&key=${MAPS_API_KEY}`;
-    // Use a CORS proxy approach via embed URL instead
+    // 修復了導航預覽畫面的官方網址格式
     const embedUrl = `https://www.google.com/maps/embed/v1/directions?key=${MAPS_API_KEY}&origin=${NTUCH_LAT},${NTUCH_LNG}&destination=${currentDestLat},${currentDestLng}&mode=driving&language=zh-TW`;
     const container = document.getElementById('map-container');
     container.innerHTML = '';
@@ -1104,7 +1103,6 @@ async function fetchTravelTime() {
     iframe.allowFullscreen = true;
     container.appendChild(iframe);
 
-    // Get duration via Distance Matrix (needs backend, use embed for now)
     const badge = document.getElementById('travel-time-badge');
     badge.style.display = 'inline-block';
     badge.textContent = '查看地圖導航';
@@ -1126,7 +1124,6 @@ function weatherIcon(desc) {
   return '🌤️';
 }
 
-// County code mapping for CWA
 const COUNTY_CODES = {
   '台北市':'F-D0047-061','新北市':'F-D0047-069','桃園':'F-D0047-005',
   '新竹':'F-D0047-009','苗栗':'F-D0047-013','台中':'F-D0047-073',
@@ -1147,12 +1144,10 @@ async function fetchWeather(county) {
     const locations = data?.records?.Locations?.[0]?.Location;
     if (!locations || !locations.length) throw new Error('no data');
 
-    // Pick first location
     const loc = locations[0];
     const wdEl = loc.WeatherElement?.find(e => e.ElementName === 'WeatherDescription');
     const desc = wdEl?.Time?.[0]?.ElementValue?.[0]?.WeatherDescription || '';
 
-    // Parse: "晴時多雲；最高溫28度；降雨機率30%"
     const parts = desc.split('；');
     const sky = parts[0] || '—';
     const temp = parts.find(p => p.includes('度')) || '';
@@ -1213,7 +1208,11 @@ async function fetchEarthquakes() {
 // ── GEOCODE HOSPITAL ──
 async function geocodeHospital(name, county) {
   return new Promise((resolve) => {
-    if (!window.google) { resolve(null); return; }
+    // 強化保護：確保地圖完全載入，沒載入就跳過，不讓整個系統死當
+    if (!window.google || !window.google.maps || !window.google.maps.Geocoder) {
+      resolve(null);
+      return;
+    }
     const geocoder = new google.maps.Geocoder();
     geocoder.geocode({ address: name + ' ' + county + ' 台灣', region: 'TW' }, (results, status) => {
       if (status === 'OK' && results[0]) {
@@ -1232,20 +1231,19 @@ async function fetchSheetLocation(sheetName) {
     const url = `https://docs.google.com/spreadsheets/d/${SHEETS_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
     const res = await fetch(url);
     const text = await res.text();
-    // gviz returns: google.visualization.Query.setResponse({...})
     const jsonStr = text.replace(/^[^(]+\(/, '').replace(/\);?$/, '');
     const data = JSON.parse(jsonStr);
     const rows = data?.table?.rows || [];
-    // Find last row with lat/lng (col B=1, C=2)
+
     for (let i = rows.length - 1; i >= 0; i--) {
       const row = rows[i].c;
       const latVal = row?.[1]?.v;
       const lngVal = row?.[2]?.v;
-      if (latVal && lngVal) {
-        // Time col (A=0) may be a Date object from gviz
+
+      // 強化防呆：一定要確認抓下來的是真正的「數字」座標，而不是表格第一列的中文標題
+      if (latVal && lngVal && !isNaN(parseFloat(latVal)) && !isNaN(parseFloat(lngVal))) {
         let timeStr = row?.[0]?.v || '';
         if (typeof timeStr === 'string' && timeStr.startsWith('Date(')) {
-          // gviz date format: Date(2026,3,6,10,30,0)
           const parts = timeStr.replace('Date(','').replace(')','').split(',').map(Number);
           const d = new Date(parts[0], parts[1], parts[2], parts[3]||0, parts[4]||0, parts[5]||0);
           timeStr = d.toISOString();
@@ -1289,17 +1287,20 @@ async function updateLocationDisplay() {
     }
   }
 
-  // Update timestamp
-  const latestTime = results.filter(Boolean).map(r => new Date(r.time)).sort((a,b) => b-a)[0];
+  // 強化保護：剃除掉無效的時間格式
+  const validTimes = results.filter(Boolean)
+    .map(r => new Date(r.time))
+    .filter(d => !isNaN(d.getTime()))
+    .sort((a,b) => b-a);
+    
+  const latestTime = validTimes[0];
   if (latestTime) {
     timeEl.textContent = `最後更新 ${minsAgo(latestTime.toISOString())}`;
   }
 
-  // Determine display
   const outsideDevices = activeDevices.filter(d => d.isOutside && d.isRecent);
 
   if (outsideDevices.length === 0) {
-    // All inside or no data
     pulse.className = 'pulse-dot idle';
     el.innerHTML = `<div class="no-mission">
       <div style="font-size:20px;margin-bottom:6px;">🏥</div>
@@ -1309,14 +1310,12 @@ async function updateLocationDisplay() {
     return;
   }
 
-  // Show outside devices
   pulse.className = 'pulse-dot active';
 
-  // Reverse geocode each outside device
   const html = await Promise.all(outsideDevices.map(async (d) => {
     let address = `${d.r.lat.toFixed(4)}, ${d.r.lng.toFixed(4)}`;
     try {
-      if (window.google) {
+      if (window.google && window.google.maps && window.google.maps.Geocoder) {
         const geocoder = new google.maps.Geocoder();
         await new Promise((resolve) => {
           geocoder.geocode({ location: { lat: d.r.lat, lng: d.r.lng }, language: 'zh-TW' }, (results, status) => {
@@ -1355,7 +1354,7 @@ function startLiveUpdates() {
   locationInterval = setInterval(updateLocationDisplay, 2 * 60 * 1000); // every 2 mins
 }
 
-// Override showResult to also trigger live features
+// 強化保護：用地圖發生錯誤時的防撞機制，確保不會拖累天氣功能
 const _origShowResult = showResult;
 window.showResult = async function(name) {
   _origShowResult(name);
@@ -1363,25 +1362,31 @@ window.showResult = async function(name) {
   currentDestName = name;
   currentDestCounty = hosp.county || '台北市';
 
-  // Geocode the hospital
   document.getElementById('map-container').innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;">地圖載入中…</div>';
-  const coords = await geocodeHospital(name, currentDestCounty);
-  if (coords) {
-    currentDestLat = coords.lat;
-    currentDestLng = coords.lng;
-    loadMapsAPI();
-    if (window.google) renderMap();
+
+  try {
+    const coords = await geocodeHospital(name, currentDestCounty);
+    if (coords) {
+      currentDestLat = coords.lat;
+      currentDestLng = coords.lng;
+      loadMapsAPI();
+      if (window.google) renderMap();
+    } else {
+      document.getElementById('map-container').innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;">地圖服務異常或尚未完全啟用</div>';
+    }
+  } catch(e) {
+    console.error("Map Error", e);
+    document.getElementById('map-container').innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;">地圖服務異常</div>';
   }
 
+  // 不管上面地圖成不成功，都會繼續幫你順利抓取天氣！
   fetchWeather(currentDestCounty);
 };
 
-// Start on load
 document.addEventListener('DOMContentLoaded', () => {
-  loadMapsAPI(); // load early so geocoder is ready
+  loadMapsAPI();
   startLiveUpdates();
 });
-
 </script>
 </body>
 </html>
