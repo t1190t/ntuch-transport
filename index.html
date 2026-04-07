@@ -618,58 +618,106 @@
   }
   @media (max-width: 700px) { .live-grid { grid-template-columns: 1fr; } }
 
-  /* ── Location ── */
+  /* ── Location dual maps ── */
+  .device-maps-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (max-width: 700px) {
+    .device-maps-grid { grid-template-columns: 1fr; }
+  }
+
+  .device-map-card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--surface);
+  }
+
+  .device-map-header {
+    padding: 10px 14px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--bg);
+    gap: 8px;
+  }
+
+  .device-map-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+    font-family: var(--mono);
+  }
+
+  .device-map-status {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    white-space: nowrap;
+  }
+  .device-map-status.out { background: var(--accent-light); color: var(--accent); }
+  .device-map-status.in  { background: var(--tag-bg); color: var(--text-muted); }
+  .device-map-status.stale { background: var(--warn-light); color: var(--warn); }
+
+  .device-map-time {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .device-map-frame {
+    position: relative;
+    height: 200px;
+    background: var(--bg);
+  }
+
+  .device-map-frame iframe {
+    width: 100%; height: 100%; border: none;
+  }
+
+  .device-map-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-muted);
+    background: var(--bg);
+    text-align: center;
+    padding: 16px;
+  }
+
+  .device-map-stale-warn {
+    font-size: 11px;
+    color: var(--warn);
+    font-weight: 500;
+    margin-top: 4px;
+    text-align: center;
+    padding: 6px 14px;
+    background: var(--warn-light);
+    border-radius: 4px;
+  }
+
   .pulse-dot {
     width: 8px; height: 8px; border-radius: 50%;
     background: var(--text-light);
     flex-shrink: 0;
+    display: inline-block;
   }
-  .pulse-dot.active {
-    background: var(--accent);
-    animation: pulse 2s infinite;
-  }
-  .pulse-dot.warn { background: var(--warn); }
+  .pulse-dot.active { background: var(--accent); animation: pulse 2s infinite; }
+  .pulse-dot.warn   { background: var(--warn); }
   @keyframes pulse {
     0%,100% { box-shadow: 0 0 0 0 rgba(74,103,65,0.4); }
-    50% { box-shadow: 0 0 0 5px rgba(74,103,65,0); }
+    50%      { box-shadow: 0 0 0 5px rgba(74,103,65,0); }
   }
 
-  .location-device {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 12px 14px;
-    background: var(--bg);
-    border-radius: 8px;
-    margin-bottom: 8px;
-  }
-  .location-device:last-child { margin-bottom: 0; }
-
-  .loc-badge {
-    font-size: 10px;
-    font-family: var(--mono);
-    padding: 3px 8px;
-    border-radius: 4px;
-    background: var(--tag-bg);
-    color: var(--text-muted);
-    white-space: nowrap;
-    flex-shrink: 0;
-    margin-top: 1px;
-  }
-  .loc-badge.out { background: var(--accent-light); color: var(--accent); }
-  .loc-badge.idle { background: var(--tag-bg); color: var(--text-muted); }
-
-  .loc-info { flex: 1; min-width: 0; }
-  .loc-name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
-  .loc-address { font-size: 12px; color: var(--text-muted); margin-bottom: 2px; }
-  .loc-time { font-size: 11px; font-family: var(--mono); color: var(--text-light); }
-
-  .no-mission {
-    text-align: center;
-    padding: 20px;
-    color: var(--text-muted);
-    font-size: 13px;
-  }
   .location-loading { color: var(--text-muted); font-size: 13px; padding: 8px 0; }
 
   /* ── Weather ── */
@@ -778,18 +826,32 @@
       <hr>
     </div>
 
-    <!-- Location tracking -->
-    <div class="card location-card" style="margin-bottom:16px;">
+    <!-- Location tracking - dual maps -->
+    <div class="card" style="margin-bottom:16px;">
       <div class="card-header">
         <div class="card-title">出勤手機定位</div>
         <div style="display:flex;gap:6px;align-items:center;">
           <div class="pulse-dot" id="location-pulse"></div>
-          <span style="font-size:11px;color:var(--text-muted);" id="location-update-time">—</span>
+          <span style="font-size:11px;color:var(--text-muted);" id="location-update-time">讀取中…</span>
         </div>
       </div>
-      <div id="location-status-area">
-        <div class="location-status" id="location-status-box">
-          <div class="location-loading">讀取定位中…</div>
+      <div class="device-maps-grid" id="device-maps-grid">
+        <!-- Rendered by JS -->
+        <div class="device-map-card">
+          <div class="device-map-header">
+            <span class="device-map-name">51579轉診手機</span>
+          </div>
+          <div class="device-map-frame">
+            <div class="device-map-overlay">讀取定位中…</div>
+          </div>
+        </div>
+        <div class="device-map-card">
+          <div class="device-map-header">
+            <span class="device-map-name">轉診備用機</span>
+          </div>
+          <div class="device-map-frame">
+            <div class="device-map-overlay">讀取定位中…</div>
+          </div>
         </div>
       </div>
     </div>
@@ -1261,6 +1323,16 @@ async function geocodeHospital(name, county) {
 }
 
 // ── LOCATION TRACKING ──
+function formatTWTime(isoStr) {
+  const d = new Date(isoStr);
+  if (isNaN(d)) return '—';
+  return d.toLocaleString('zh-TW', {
+    timeZone: 'Asia/Taipei',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false
+  }).replace(/\//g, '/');
+}
+
 async function fetchSheetLocation(sheetName) {
   try {
     const url = `https://docs.google.com/spreadsheets/d/${SHEETS_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
@@ -1280,19 +1352,15 @@ async function fetchSheetLocation(sheetName) {
         let parsedTime = null;
 
         if (typeof timeStr === 'string' && timeStr.startsWith('Date(')) {
-          // gviz Date format: Date(year, month0based, day, h, m, s)
-          // This is LOCAL time (Taiwan time from Apps Script)
+          // gviz Date: Date(year, month0, day, h, m, s) - local TW time
           const parts = timeStr.replace('Date(','').replace(')','').split(',').map(Number);
-          // Treat as Taiwan time (UTC+8): subtract 8h to get UTC
+          // Convert TW local (UTC+8) → UTC
           parsedTime = new Date(Date.UTC(parts[0], parts[1], parts[2],
             (parts[3]||0) - 8, parts[4]||0, parts[5]||0));
         } else if (timeStr) {
-          // Try to parse directly
           parsedTime = new Date(timeStr);
           if (isNaN(parsedTime)) {
-            // Handle formats like "2026/4/6 上午10:40:59"
-            const cleaned = timeStr
-              .replace('上午','').replace('下午','')
+            const cleaned = timeStr.replace('上午','').replace('下午','')
               .replace(/\//g,'-').trim();
             parsedTime = new Date(cleaned);
           }
@@ -1300,7 +1368,7 @@ async function fetchSheetLocation(sheetName) {
 
         const isoTime = (parsedTime && !isNaN(parsedTime))
           ? parsedTime.toISOString()
-          : new Date().toISOString(); // fallback to now if can't parse
+          : new Date(0).toISOString();
 
         return {
           time: isoTime,
@@ -1314,89 +1382,99 @@ async function fetchSheetLocation(sheetName) {
   return null;
 }
 
+function buildDeviceMapURL(r, isOutside) {
+  if (!isOutside) {
+    // Show NTUCH
+    return `https://www.google.com/maps/embed/v1/place?key=${MAPS_API_KEY}&q=${NTUCH_LAT},${NTUCH_LNG}&zoom=16&language=zh-TW`;
+  }
+  if (currentDestLat && currentDestLng) {
+    // Show navigation: NTUCH → destination, with phone marker via waypoint
+    return `https://www.google.com/maps/embed/v1/directions?key=${MAPS_API_KEY}&origin=${NTUCH_LAT},${NTUCH_LNG}&destination=${currentDestLat},${currentDestLng}&waypoints=${r.lat},${r.lng}&mode=driving&language=zh-TW`;
+  }
+  // No destination set - just show phone location
+  return `https://www.google.com/maps/embed/v1/place?key=${MAPS_API_KEY}&q=${r.lat},${r.lng}&zoom=15&language=zh-TW`;
+}
+
 async function updateLocationDisplay() {
-  const el = document.getElementById('location-status-box');
   const timeEl = document.getElementById('location-update-time');
-  const pulse = document.getElementById('location-pulse');
+  const pulse  = document.getElementById('location-pulse');
+  const grid   = document.getElementById('device-maps-grid');
 
   const results = await Promise.all(DEVICES.map(d => fetchSheetLocation(d.id)));
   const now = Date.now();
+  const STALE_MS = 30 * 60 * 1000; // 30 minutes
 
-  let activeDevices = [];
-  let allInside = true;
+  // Update header timestamp with latest valid time
+  const validTimes = results.filter(Boolean)
+    .map(r => new Date(r.time))
+    .filter(d => !isNaN(d.getTime()))
+    .sort((a,b) => b - a);
+  if (validTimes[0]) {
+    timeEl.textContent = `最後更新：${formatTWTime(validTimes[0].toISOString())}`;
+  }
 
-  for (let i = 0; i < DEVICES.length; i++) {
-    const d = DEVICES[i];
+  // Check if any device is outside
+  const anyOutside = results.some((r, i) => {
+    if (!r) return false;
+    return haversine(r.lat, r.lng, NTUCH_LAT, NTUCH_LNG) > NTUCH_RADIUS_M;
+  });
+  pulse.className = anyOutside ? 'pulse-dot active' : 'pulse-dot idle';
+
+  // Render each device card
+  const cards = await Promise.all(DEVICES.map(async (device, i) => {
     const r = results[i];
-    if (!r) continue;
+    const label = device.label;
+
+    if (!r) {
+      return `<div class="device-map-card">
+        <div class="device-map-header">
+          <span class="device-map-name">${label}</span>
+          <span class="device-map-status stale">無資料</span>
+        </div>
+        <div class="device-map-frame">
+          <div class="device-map-overlay">無法取得定位資料</div>
+        </div>
+      </div>`;
+    }
 
     const dist = haversine(r.lat, r.lng, NTUCH_LAT, NTUCH_LNG);
     const isOutside = dist > NTUCH_RADIUS_M;
     const dataAge = now - new Date(r.time).getTime();
-    const isRecent = dataAge < 30 * 60 * 1000; // 30 minutes
+    const isStale = dataAge > STALE_MS;
+    const lastUpdateStr = formatTWTime(r.time);
+    const distText = dist > 1000 ? `${(dist/1000).toFixed(1)} km` : `${Math.round(dist)} m`;
 
-    if (isOutside) allInside = false;
-    if (isOutside || !isRecent) {
-      activeDevices.push({ ...d, r, dist, isOutside, isRecent });
-    }
-  }
+    const statusClass = isStale ? 'stale' : (isOutside ? 'out' : 'in');
+    const statusText  = isStale ? '逾時' : (isOutside ? '出勤中' : '院內');
 
-  const validTimes = results.filter(Boolean)
-    .map(r => new Date(r.time))
-    .filter(d => !isNaN(d.getTime()))
-    .sort((a,b) => b-a);
-    
-  const latestTime = validTimes[0];
-  if (latestTime) {
-    timeEl.textContent = `最後更新 ${minsAgo(latestTime.toISOString())}`;
-  }
+    const mapURL = buildDeviceMapURL(r, isOutside);
 
-  const outsideDevices = activeDevices.filter(d => d.isOutside && d.isRecent);
+    const staleWarn = isStale
+      ? `<div class="device-map-stale-warn">⚠ 此裝置已超過 30 分鐘無新的 GPS 數據</div>`
+      : '';
 
-  if (outsideDevices.length === 0) {
-    pulse.className = 'pulse-dot idle';
-    el.innerHTML = `<div class="no-mission">
-      <div style="font-size:20px;margin-bottom:6px;">🏥</div>
-      <div>目前沒有出勤任務</div>
-      <div style="font-size:11px;margin-top:4px;color:var(--text-light);">兩支手機皆在台大兒童醫院範圍內</div>
-    </div>`;
-    return;
-  }
+    const inMission = isOutside && !isStale;
+    const noMissionOverlay = (!isOutside && !isStale)
+      ? `<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(247,245,242,0.88);padding:8px 12px;text-align:center;font-size:12px;color:var(--text-muted);">
+           🏥 目前沒有出勤任務
+         </div>`
+      : '';
 
-  pulse.className = 'pulse-dot active';
-
-  const html = await Promise.all(outsideDevices.map(async (d) => {
-    let address = `${d.r.lat.toFixed(4)}, ${d.r.lng.toFixed(4)}`;
-    try {
-      if (window.google && window.google.maps && window.google.maps.Geocoder) {
-        const geocoder = new google.maps.Geocoder();
-        await new Promise((resolve) => {
-          geocoder.geocode({ location: { lat: d.r.lat, lng: d.r.lng }, language: 'zh-TW' }, (results, status) => {
-            if (status === 'OK' && results[0]) {
-              const components = results[0].address_components;
-              const route = components.find(c => c.types.includes('route'))?.long_name || '';
-              const area = components.find(c => c.types.includes('sublocality_level_1'))?.long_name || '';
-              const city = components.find(c => c.types.includes('administrative_area_level_1'))?.long_name || '';
-              address = [city, area, route].filter(Boolean).join(' ');
-            }
-            resolve();
-          });
-        });
-      }
-    } catch(e) {}
-
-    const distText = d.dist > 1000 ? `${(d.dist/1000).toFixed(1)} km` : `${Math.round(d.dist)} m`;
-    return `<div class="location-device">
-      <div class="loc-badge out">出勤中</div>
-      <div class="loc-info">
-        <div class="loc-name">${d.label}</div>
-        <div class="loc-address">📍 ${address}</div>
-        <div class="loc-time">距台大兒童 ${distText}　${minsAgo(d.r.time)}</div>
+    return `<div class="device-map-card">
+      <div class="device-map-header">
+        <span class="device-map-name">${label}</span>
+        <span class="device-map-time">最後更新：${lastUpdateStr}</span>
+        <span class="device-map-status ${statusClass}">${statusText}${isOutside && !isStale ? '　' + distText : ''}</span>
       </div>
+      <div class="device-map-frame" style="position:relative;">
+        <iframe src="${mapURL}" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        ${noMissionOverlay}
+      </div>
+      ${staleWarn}
     </div>`;
   }));
 
-  el.innerHTML = html.join('');
+  grid.innerHTML = cards.join('');
 }
 
 // ── INIT & INTERVAL ──
