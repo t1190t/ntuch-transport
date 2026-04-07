@@ -1277,13 +1277,33 @@ async function fetchSheetLocation(sheetName) {
 
       if (latVal && lngVal && !isNaN(parseFloat(latVal)) && !isNaN(parseFloat(lngVal))) {
         let timeStr = row?.[0]?.v || '';
+        let parsedTime = null;
+
         if (typeof timeStr === 'string' && timeStr.startsWith('Date(')) {
+          // gviz Date format: Date(year, month0based, day, h, m, s)
+          // This is LOCAL time (Taiwan time from Apps Script)
           const parts = timeStr.replace('Date(','').replace(')','').split(',').map(Number);
-          const d = new Date(parts[0], parts[1], parts[2], parts[3]||0, parts[4]||0, parts[5]||0);
-          timeStr = d.toISOString();
+          // Treat as Taiwan time (UTC+8): subtract 8h to get UTC
+          parsedTime = new Date(Date.UTC(parts[0], parts[1], parts[2],
+            (parts[3]||0) - 8, parts[4]||0, parts[5]||0));
+        } else if (timeStr) {
+          // Try to parse directly
+          parsedTime = new Date(timeStr);
+          if (isNaN(parsedTime)) {
+            // Handle formats like "2026/4/6 上午10:40:59"
+            const cleaned = timeStr
+              .replace('上午','').replace('下午','')
+              .replace(/\//g,'-').trim();
+            parsedTime = new Date(cleaned);
+          }
         }
+
+        const isoTime = (parsedTime && !isNaN(parsedTime))
+          ? parsedTime.toISOString()
+          : new Date().toISOString(); // fallback to now if can't parse
+
         return {
-          time: timeStr,
+          time: isoTime,
           lat: parseFloat(latVal),
           lng: parseFloat(lngVal),
           acc: parseFloat(row?.[3]?.v || 0)
@@ -1313,7 +1333,7 @@ async function updateLocationDisplay() {
     const dist = haversine(r.lat, r.lng, NTUCH_LAT, NTUCH_LNG);
     const isOutside = dist > NTUCH_RADIUS_M;
     const dataAge = now - new Date(r.time).getTime();
-    const isRecent = dataAge < 10 * 60 * 1000;
+    const isRecent = dataAge < 30 * 60 * 1000; // 30 minutes
 
     if (isOutside) allInside = false;
     if (isOutside || !isRecent) {
