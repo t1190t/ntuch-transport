@@ -718,6 +718,16 @@
     50%      { box-shadow: 0 0 0 5px rgba(74,103,65,0); }
   }
 
+  .device-map-eta {
+    font-size: 11px;
+    font-family: var(--mono);
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--info-light);
+    color: var(--info);
+    white-space: nowrap;
+  }
+
   .location-loading { color: var(--text-muted); font-size: 13px; padding: 8px 0; }
 
   /* ── Weather ── */
@@ -813,6 +823,28 @@
       </div>
       <button class="btn-primary" onclick="doSearch()">查詢</button>
       <button class="btn-clear" onclick="clearSearch()">清除</button>
+    </div>
+  </div>
+
+  <!-- ETA from NTUCH card (shown after search) -->
+  <div id="eta-card" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 24px;margin-bottom:20px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+        </svg>
+        <span style="font-size:12px;color:var(--text-muted);">台大兒童醫院 → <span id="eta-dest-name" style="color:var(--text);font-weight:500;"></span></span>
+      </div>
+      <div id="eta-value" style="font-family:var(--mono);font-size:22px;font-weight:300;color:var(--text);">
+        <span style="color:var(--text-muted);font-size:13px;">計算中…</span>
+      </div>
+    </div>
+    <div style="margin-top:8px;height:3px;background:var(--bg);border-radius:2px;overflow:hidden;">
+      <div id="eta-road-bar" style="height:100%;width:0%;background:var(--accent);border-radius:2px;transition:width 0.8s ease;"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:4px;">
+      <span style="font-size:10px;color:var(--text-light);font-family:var(--mono);">台大兒童醫院</span>
+      <span style="font-size:10px;color:var(--text-light);font-family:var(--mono);" id="eta-dest-label"></span>
     </div>
   </div>
 
@@ -982,6 +1014,10 @@ function clearSearch() {
   document.getElementById('result-area').classList.remove('visible');
   document.getElementById('empty-state').style.display = '';
   document.getElementById('result-content').innerHTML = '';
+  document.getElementById('eta-card').style.display = 'none';
+  currentDestLat = null;
+  currentDestLng = null;
+  currentDestName = '';
 }
 
 function showResult(name) {
@@ -1402,9 +1438,9 @@ async function updateLocationDisplay() {
 
   const results = await Promise.all(DEVICES.map(d => fetchSheetLocation(d.id)));
   const now = Date.now();
-  const STALE_MS = 30 * 60 * 1000; // 30 minutes
+  const STALE_MS = 30 * 60 * 1000;
 
-  // Update header timestamp with latest valid time
+  // Update header timestamp
   const validTimes = results.filter(Boolean)
     .map(r => new Date(r.time))
     .filter(d => !isNaN(d.getTime()))
@@ -1413,14 +1449,10 @@ async function updateLocationDisplay() {
     timeEl.textContent = `最後更新：${formatTWTime(validTimes[0].toISOString())}`;
   }
 
-  // Check if any device is outside
-  const anyOutside = results.some((r, i) => {
-    if (!r) return false;
-    return haversine(r.lat, r.lng, NTUCH_LAT, NTUCH_LNG) > NTUCH_RADIUS_M;
-  });
+  const anyOutside = results.some(r => r && haversine(r.lat, r.lng, NTUCH_LAT, NTUCH_LNG) > NTUCH_RADIUS_M);
   pulse.className = anyOutside ? 'pulse-dot active' : 'pulse-dot idle';
 
-  // Render each device card
+  // Render each device card (with ETA if outside + dest known)
   const cards = await Promise.all(DEVICES.map(async (device, i) => {
     const r = results[i];
     const label = device.label;
@@ -1444,16 +1476,26 @@ async function updateLocationDisplay() {
     const lastUpdateStr = formatTWTime(r.time);
     const distText = dist > 1000 ? `${(dist/1000).toFixed(1)} km` : `${Math.round(dist)} m`;
 
+    // Fetch phone→dest ETA if active mission
+    let etaHTML = '';
+    if (isOutside && !isStale && currentDestLat && currentDestLng) {
+      const mins = await calcETAMinutes(r.lat, r.lng, currentDestLat, currentDestLng);
+      if (mins !== null) {
+        const h = Math.floor(mins / 60);
+        const m = mins % 60;
+        const etaLabel = h > 0 ? `${h}h ${m}m` : `${m} 分鐘`;
+        etaHTML = `<span class="device-map-eta">預計還需 ${etaLabel}</span>`;
+      }
+    }
+
     const statusClass = isStale ? 'stale' : (isOutside ? 'out' : 'in');
     const statusText  = isStale ? '逾時' : (isOutside ? '出勤中' : '院內');
-
     const mapURL = buildDeviceMapURL(r, isOutside);
 
     const staleWarn = isStale
       ? `<div class="device-map-stale-warn">⚠ 此裝置已超過 30 分鐘無新的 GPS 數據</div>`
       : '';
 
-    const inMission = isOutside && !isStale;
     const noMissionOverlay = (!isOutside && !isStale)
       ? `<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(247,245,242,0.88);padding:8px 12px;text-align:center;font-size:12px;color:var(--text-muted);">
            🏥 目前沒有出勤任務
@@ -1464,7 +1506,10 @@ async function updateLocationDisplay() {
       <div class="device-map-header">
         <span class="device-map-name">${label}</span>
         <span class="device-map-time">最後更新：${lastUpdateStr}</span>
-        <span class="device-map-status ${statusClass}">${statusText}${isOutside && !isStale ? '　' + distText : ''}</span>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+          <span class="device-map-status ${statusClass}">${statusText}${isOutside && !isStale ? '　' + distText : ''}</span>
+          ${etaHTML}
+        </div>
       </div>
       <div class="device-map-frame" style="position:relative;">
         <iframe src="${mapURL}" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
@@ -1485,37 +1530,88 @@ function startLiveUpdates() {
   locationInterval = setInterval(updateLocationDisplay, 2 * 60 * 1000); 
 }
 
-// 🌟 修改：點擊查詢時就撐開地圖，並隱藏舊時間
+// ── ETA via Distance Matrix (Maps JS API) ──
+function calcETAMinutes(originLat, originLng, destLat, destLng) {
+  return new Promise((resolve) => {
+    if (!window.google || !window.google.maps) { resolve(null); return; }
+    const svc = new google.maps.DistanceMatrixService();
+    svc.getDistanceMatrix({
+      origins: [{ lat: originLat, lng: originLng }],
+      destinations: [{ lat: destLat, lng: destLng }],
+      travelMode: google.maps.TravelMode.DRIVING,
+      drivingOptions: {
+        departureTime: new Date(),
+        trafficModel: google.maps.TrafficModel.BEST_GUESS
+      },
+      language: 'zh-TW'
+    }, (res, status) => {
+      if (status === 'OK') {
+        const el = res.rows[0].elements[0];
+        if (el.status === 'OK') {
+          const secs = el.duration_in_traffic
+            ? el.duration_in_traffic.value
+            : el.duration.value;
+          resolve(Math.round(secs / 60));
+        } else { resolve(null); }
+      } else { resolve(null); }
+    });
+  });
+}
+
+async function showNTUCHEta(name, destLat, destLng) {
+  const card = document.getElementById('eta-card');
+  const valEl = document.getElementById('eta-value');
+  const barEl = document.getElementById('eta-road-bar');
+  document.getElementById('eta-dest-name').textContent = name;
+  document.getElementById('eta-dest-label').textContent = name;
+  card.style.display = 'block';
+  valEl.innerHTML = '<span style="color:var(--text-muted);font-size:13px;">計算中…</span>';
+  barEl.style.width = '0%';
+
+  const mins = await calcETAMinutes(NTUCH_LAT, NTUCH_LNG, destLat, destLng);
+  if (mins === null) {
+    valEl.innerHTML = '<span style="color:var(--text-muted);font-size:13px;">無法取得路況</span>';
+    return;
+  }
+
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  const label = h > 0 ? `${h} 小時 ${m} 分鐘` : `${m} 分鐘`;
+  valEl.innerHTML = `${label} <span style="font-size:12px;color:var(--text-muted);">（含即時路況）</span>`;
+
+  // Progress bar: assume max 180 min = 100%
+  const pct = Math.min(100, Math.round((mins / 180) * 100));
+  setTimeout(() => { barEl.style.width = pct + '%'; }, 50);
+}
+
+// ── SHOW RESULT OVERRIDE ──
 const _origShowResult = showResult;
 window.showResult = async function(name) {
   _origShowResult(name);
   const hosp = DB[name];
   currentDestName = name;
   currentDestCounty = hosp.county || '台北市';
+  currentDestLat = null;
+  currentDestLng = null;
 
-  const mapContainer = document.getElementById('map-container');
-  mapContainer.style.height = '380px'; // 點擊時同步撐開地圖
-  mapContainer.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;line-height:380px;">地圖載入中…</div>';
-  
-  const badge = document.getElementById('travel-time-badge');
-  badge.style.display = 'none';
+  // Hide ETA card while geocoding
+  document.getElementById('eta-card').style.display = 'none';
+
+  fetchWeather(currentDestCounty);
 
   try {
     const coords = await geocodeHospital(name, currentDestCounty);
     if (coords) {
       currentDestLat = coords.lat;
       currentDestLng = coords.lng;
-      loadMapsAPI();
-      if (window.google) renderMap();
-    } else {
-      mapContainer.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;line-height:380px;">地圖服務異常或尚未完全啟用</div>';
+      // Show NTUCH → dest ETA immediately
+      showNTUCHEta(name, currentDestLat, currentDestLng);
+      // Refresh device maps with new destination
+      updateLocationDisplay();
     }
   } catch(e) {
-    console.error("Map Error", e);
-    mapContainer.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;line-height:380px;">地圖服務異常</div>';
+    console.error('Geocode/ETA error', e);
   }
-
-  fetchWeather(currentDestCounty);
 };
 
 document.addEventListener('DOMContentLoaded', () => {
