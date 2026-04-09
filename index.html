@@ -709,10 +709,18 @@
             <div class="suhua-subtitle" id="suhua-subtitle">查詢東部院所時自動啟用</div>
           </div>
         </div>
-        <button class="suhua-toggle-btn" id="suhua-toggle-btn">
-          <span>收起</span>
-          <i class="suhua-chevron up" id="suhua-chevron">▲</i>
-        </button>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <a href="https://su-hua-dashboard.vercel.app/" target="_blank" rel="noopener"
+             onclick="event.stopPropagation()"
+             style="font-size:11px;font-family:var(--sans);color:var(--suhua-header);background:rgba(124,74,16,0.08);border:1px solid var(--suhua-border);border-radius:6px;padding:4px 10px;text-decoration:none;white-space:nowrap;transition:background 0.15s;"
+             onmouseover="this.style.background='rgba(124,74,16,0.16)'"
+             onmouseout="this.style.background='rgba(124,74,16,0.08)'"
+          >完整資訊 ↗</a>
+          <button class="suhua-toggle-btn" id="suhua-toggle-btn">
+            <span>收起</span>
+            <i class="suhua-chevron up" id="suhua-chevron">▲</i>
+          </button>
+        </div>
       </div>
 
       <div class="suhua-body expanded" id="suhua-body">
@@ -1141,8 +1149,16 @@ function renderRainCard(rainInfo) {
   };
 
   const rows = rainInfo.map(item => {
-    const mmText = item.mm === 'N/A' ? '—' : item.mm === 0 || parseFloat(item.mm) === 0 ? '0 mm' : `${item.mm} mm`;
-    const cls = rainClassMap[item.class] || '';
+    const isNoData  = item.mm === 'N/A';
+    const isNoRain  = !isNoData && (item.mm === 0 || parseFloat(item.mm) === 0);
+    const mmText    = isNoData ? '—' : isNoRain ? '0 mm' : `${item.mm} mm`;
+    const cls       = rainClassMap[item.class] || '';
+    const noRainTag = isNoRain
+      ? `<span style="font-size:10px;color:var(--road-green);background:var(--road-green-bg);padding:1px 6px;border-radius:3px;font-family:var(--mono);margin-left:5px;">無降雨</span>`
+      : '';
+    const noDataTag = isNoData
+      ? `<span style="font-size:10px;color:var(--text-muted);background:var(--tag-bg);padding:1px 6px;border-radius:3px;font-family:var(--mono);margin-left:5px;">無資料</span>`
+      : '';
     let forecastHtml = '';
     if (item.forecast && item.forecast !== 'N/A') {
       const isWarn = item.forecast.includes('%') && parseInt(item.forecast) > 50;
@@ -1151,7 +1167,9 @@ function renderRainCard(rainInfo) {
     return `<div class="rain-row">
       <span class="rain-location">${item.location}</span>
       <div class="rain-right">
-        <div class="rain-value ${cls}">${mmText}</div>
+        <div style="display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:2px;">
+          <span class="rain-value ${cls}">${mmText}</span>${noRainTag}${noDataTag}
+        </div>
         ${forecastHtml}
       </div>
     </div>`;
