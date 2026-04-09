@@ -1385,11 +1385,13 @@ async function fetchSheetLocation(sheetName) {
               let hStr = String(h).padStart(2, '0');
               parsedTime = new Date(`${datePart} ${hStr}:${m}:${s}${restPart}`);
             } else {
-              // 如果無法匹配時間格式，則做最後的安全處理
-              parsedTime = new Date(cleaned.replace(/-/g, '/'));
+                // 如果無法匹配時間格式，則做最後的安全處理
+                parsedTime = new Date(cleaned.replace(/-/g, '/'));
+              }
             }
-          }
-        
+          // ⚠️ 這裡少了一個 } 用來關閉上面的 else if (timeStr) 區塊！
+
+        const isoTime = (parsedTime && !isNaN(parsedTime))
         const isoTime = (parsedTime && !isNaN(parsedTime))
           ? parsedTime.toISOString()
           : new Date(0).toISOString();
