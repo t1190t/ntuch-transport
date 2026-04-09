@@ -1149,8 +1149,12 @@ function renderRainCard(rainInfo) {
   };
 
   const rows = rainInfo.map(item => {
-    const isNoData  = item.mm === 'N/A';
-    const isNoRain  = !isNoData && (item.mm === 0 || parseFloat(item.mm) === 0);
+    // item.class from backend is the most reliable indicator:
+    // 'rain-none'   = station reported, 0mm (no rain)
+    // 'rain-nodata' = station did not respond
+    // 'rain-error'  = station data error
+    const isNoData  = item.class === 'rain-nodata' || item.class === 'rain-error' || item.mm === 'N/A';
+    const isNoRain  = item.class === 'rain-none' || (!isNoData && (item.mm === 0 || parseFloat(item.mm) === 0));
     const mmText    = isNoData ? '—' : isNoRain ? '0 mm' : `${item.mm} mm`;
     const cls       = rainClassMap[item.class] || '';
     const noRainTag = isNoRain
