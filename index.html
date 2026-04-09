@@ -1352,18 +1352,31 @@ async function fetchSheetLocation(sheetName) {
         let parsedTime = null;
 
         if (typeof timeStr === 'string' && timeStr.startsWith('Date(')) {
-          // gviz Date: Date(year, month0, day, h, m, s) - local TW time
+          // gviz Date(year, month0, day, h, m, s) — values are UTC
           const parts = timeStr.replace('Date(','').replace(')','').split(',').map(Number);
-          // Convert TW local (UTC+8) → UTC
           parsedTime = new Date(Date.UTC(parts[0], parts[1], parts[2],
             parts[3]||0, parts[4]||0, parts[5]||0));
+          console.log('[GPS] gviz Date():', timeStr, '->', parsedTime?.toISOString());
         } else if (timeStr) {
-          parsedTime = new Date(timeStr);
-          if (isNaN(parsedTime)) {
-            const cleaned = timeStr.replace('上午','').replace('下午','')
-              .replace(/\//g,'-').trim();
+          // Handle Chinese AM/PM: 上午=AM, 下午=PM
+          const isPM = timeStr.includes('下午');
+          const isAM = timeStr.includes('上午');
+          const cleaned = timeStr
+            .replace('上午','').replace('下午','')
+            .replace(/\//g,'-').replace(/\s+/g,' ').trim();
+          // Try to extract Y/M/D H:m:s for explicit UTC+8 conversion
+          const mt = cleaned.match(/(\d{4})-(\d{1,2})-(\d{1,2})\s*(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+          if (mt) {
+            let [, y, mo, d, h, min, sec] = mt.map(Number);
+            if (isPM && h < 12) h += 12;  // 下午: convert to 24h
+            if (isAM && h === 12) h = 0;  // 上午12點 = 0點
+            parsedTime = new Date(Date.UTC(y, mo - 1, d, h - 8, min, sec || 0));
+          } else {
             parsedTime = new Date(cleaned);
           }
+          console.log('[GPS] String format:', JSON.stringify(timeStr), '->', parsedTime?.toISOString());
+        } else {
+          console.log('[GPS] No timestamp in row', i);
         }
 
         const isoTime = (parsedTime && !isNaN(parsedTime))
