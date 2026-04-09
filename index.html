@@ -1357,15 +1357,39 @@ async function fetchSheetLocation(sheetName) {
           // Convert TW local (UTC+8) → UTC
           parsedTime = new Date(Date.UTC(parts[0], parts[1], parts[2],
             (parts[3]||0) - 8, parts[4]||0, parts[5]||0));
-        } else if (timeStr) {
+      } else if (timeStr) {
           parsedTime = new Date(timeStr);
           if (isNaN(parsedTime)) {
-            const cleaned = timeStr.replace('上午','').replace('下午','')
-              .replace(/\//g,'-').trim();
-            parsedTime = new Date(cleaned);
+            let isPM = timeStr.includes('下午');
+            let isAM = timeStr.includes('上午');
+            
+            // 先清除文字中的上下午，並去除前後空白
+            let cleaned = timeStr.replace('上午', '').replace('下午', '').trim();
+            
+            // 找出日期與時間的部分 (例如: 2025/10/24 02:30:00)
+            let timeMatch = cleaned.match(/(.*?)\s+(\d{1,2}):(\d{1,2}):(\d{1,2})(.*)/);
+            
+            if (timeMatch) {
+              // 為了確保手機端 (Safari) 也能正確解析，把日期分隔符統一換成斜線
+              let datePart = timeMatch[1].replace(/-/g, '/');
+              let h = parseInt(timeMatch[2], 10);
+              let m = timeMatch[3];
+              let s = timeMatch[4];
+              let restPart = timeMatch[5];
+              
+              // 進行 24 小時制的邏輯轉換
+              if (isPM && h < 12) h += 12;
+              if (isAM && h === 12) h = 0;
+              
+              // 把小時補齊為兩位數
+              let hStr = String(h).padStart(2, '0');
+              parsedTime = new Date(`${datePart} ${hStr}:${m}:${s}${restPart}`);
+            } else {
+              // 如果無法匹配時間格式，則做最後的安全處理
+              parsedTime = new Date(cleaned.replace(/-/g, '/'));
+            }
           }
-        }
-
+        
         const isoTime = (parsedTime && !isNaN(parsedTime))
           ? parsedTime.toISOString()
           : new Date(0).toISOString();
