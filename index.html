@@ -1518,83 +1518,176 @@ function buildDeviceMapURL(r, phase) {
   return `https://www.google.com/maps/embed/v1/place?key=${MAPS_API_KEY}&q=${NTUCH_LAT},${NTUCH_LNG}&zoom=16&language=zh-TW`;
 }
 
+const deviceLastMapURL = DEVICES.map(() => null);
+
+function ensureDeviceCards() {
+  const grid = document.getElementById('device-maps-grid');
+  if (grid.querySelectorAll('.device-map-card').length === DEVICES.length) return;
+  grid.innerHTML = DEVICES.map((device, i) => `
+    <div class="device-map-card" id="device-card-${i}">
+      <div class="device-map-header">
+        <span class="device-map-name">${device.label}</span>
+        <span class="device-map-time" id="device-time-${i}">讀取中…</span>
+        <span class="device-map-status in" id="device-status-${i}">—</span>
+      </div>
+      <div id="device-eta-${i}"></div>
+      <div class="device-map-frame" style="position:relative;" id="device-frame-${i}">
+        <div class="device-map-overlay">讀取定位中…</div>
+      </div>
+      <div id="device-stale-${i}"></div>
+    </div>`).join('');
+}
+
 async function updateLocationDisplay() {
+  ensureDeviceCards();
+
   const timeEl = document.getElementById('location-update-time');
   const pulse  = document.getElementById('location-pulse');
-  const grid   = document.getElementById('device-maps-grid');
+
   const results = await Promise.all(DEVICES.map(d => fetchSheetLocation(d.id)));
   const now = Date.now();
   const STALE_MS = 30 * 60 * 1000;
-  const validTimes = results.filter(Boolean).map(r => new Date(r.time)).filter(d => !isNaN(d.getTime())).sort((a,b) => b - a);
+
+  const validTimes = results.filter(Boolean)
+    .map(r => new Date(r.time)).filter(d => !isNaN(d.getTime()))
+    .sort((a, b) => b - a);
   if (validTimes[0]) timeEl.textContent = `最後更新：${formatTWTime(validTimes[0].toISOString())}`;
+
   const anyOutside = results.some(r => r && haversine(r.lat, r.lng, NTUCH_LAT, NTUCH_LNG) > NTUCH_RADIUS_M);
   pulse.className = anyOutside ? 'pulse-dot active' : 'pulse-dot idle';
-  const cards = await Promise.all(DEVICES.map(async (device, i) => {
+
+  await Promise.all(DEVICES.map(async (device, i) => {
     const r = results[i];
-    const label = device.label;
+    const statusEl = document.getElementById(`device-status-${i}`);
+    const timeEl2  = document.getElementById(`device-time-${i}`);
+    const etaEl    = document.getElementById(`device-eta-${i}`);
+    const staleEl  = document.getElementById(`device-stale-${i}`);
+    const frameEl  = document.getElementById(`device-frame-${i}`);
+
     if (!r) {
-      return `<div class="device-map-card">
-        <div class="device-map-header"><span class="device-map-name">${label}</span><span class="device-map-status stale">無資料</span></div>
-        <div class="device-map-frame"><div class="device-map-overlay">無法取得定位資料</div></div>
-      </div>`;
+      statusEl.className   = 'device-map-status stale';
+      statusEl.textContent = '無資料';
+      timeEl2.textContent  = '—';
+      etaEl.innerHTML  = '';
+      staleEl.innerHTML = '';
+      if (!frameEl.querySelector('iframe')) {
+        frameEl.innerHTML = '<div class="device-map-overlay">無法取得定位資料</div>';
+      }
+      return;
     }
-    const distNTUCH  = haversine(r.lat, r.lng, NTUCH_LAT, NTUCH_LNG);
-    const isOutside  = distNTUCH > NTUCH_RADIUS_M;
-    const dataAge    = now - new Date(r.time).getTime();
-    const isStale    = dataAge > STALE_MS;
-    const lastUpdateStr  = formatTWTime(r.time);
-    const distNTUCHText  = distNTUCH > 1000 ? `${(distNTUCH/1000).toFixed(1)} km` : `${Math.round(distNTUCH)} m`;
+
+    const distNTUCH = haversine(r.lat, r.lng, NTUCH_LAT, NTUCH_LNG);
+    const isOutside = distNTUCH > NTUCH_RADIUS_M;
+    const dataAge   = now - new Date(r.time).getTime();
+    const isStale   = dataAge > STALE_MS;
+    const distNTUCHText = distNTUCH > 1000
+      ? `${(distNTUCH / 1000).toFixed(1)} km`
+      : `${Math.round(distNTUCH)} m`;
+
+    timeEl2.textContent = `最後更新：${formatTWTime(r.time)}`;
+
+    // 判斷 phase
     let phase = 'in';
     if (isOutside && currentDestLat && currentDestLng) {
       const distToDest = haversine(r.lat, r.lng, currentDestLat, currentDestLng);
       if (!deviceHasArrived[i]) {
         if (distToDest < DEST_RADIUS_M) { deviceHasArrived[i] = true; phase = 'at_dest'; }
         else { phase = 'outbound'; }
-      } else { phase = distToDest < DEST_RADIUS_M ? 'at_dest' : 'returning'; }
-    } else if (isOutside) { phase = 'outbound'; }
-    else { if (deviceHasArrived[i]) deviceHasArrived[i] = false; phase = 'in'; }
+      } else {
+        phase = distToDest < DEST_RADIUS_M ? 'at_dest' : 'returning';
+      }
+    } else if (isOutside) {
+      phase = 'outbound';
+    } else {
+      if (deviceHasArrived[i]) deviceHasArrived[i] = false;
+      phase = 'in';
+    }
+
+    // Status badge
     let statusClass, statusText;
-    if (isStale) { statusClass = 'stale'; statusText = '逾時'; }
-    else if (phase === 'in') { statusClass = 'in'; statusText = '院內'; }
-    else if (phase === 'outbound') { statusClass = 'out'; statusText = '去程'; }
-    else if (phase === 'at_dest') { statusClass = 'out'; statusText = '已抵達'; }
-    else if (phase === 'returning') { statusClass = 'returning'; statusText = '回程　' + distNTUCHText; }
-    let etaRow = '';
+    if (isStale)                    { statusClass = 'stale';      statusText = '逾時'; }
+    else if (phase === 'in')        { statusClass = 'in';         statusText = '院內'; }
+    else if (phase === 'outbound')  { statusClass = 'out';        statusText = '去程'; }
+    else if (phase === 'at_dest')   { statusClass = 'out';        statusText = '已抵達'; }
+    else if (phase === 'returning') { statusClass = 'returning';  statusText = '回程　' + distNTUCHText; }
+    statusEl.className   = `device-map-status ${statusClass}`;
+    statusEl.textContent = statusText;
+
+    // Stale warning
+    staleEl.innerHTML = isStale
+      ? `<div class="device-map-stale-warn">⚠ 此裝置已超過 30 分鐘無新的 GPS 數據</div>`
+      : '';
+
+    // ETA row
     if (!isStale && (phase === 'outbound' || phase === 'returning') && window.google) {
       const destLat = phase === 'outbound' ? currentDestLat : NTUCH_LAT;
       const destLng = phase === 'outbound' ? currentDestLng : NTUCH_LNG;
       const eta = await fetchDeviceETA(r.lat, r.lng, destLat, destLng);
       if (eta) {
         const etaDestLabel = phase === 'outbound' ? (currentDestName || '目的醫院') : '台大兒童醫院';
-        etaRow = `<div class="device-eta-row ${phase === 'returning' ? 'returning' : ''}">
+        etaEl.innerHTML = `<div class="device-eta-row ${phase === 'returning' ? 'returning' : ''}">
           <span class="device-eta-label">${phase === 'returning' ? '↩ 回程' : '↗ 去程'}</span>
           <span class="device-eta-mins">約 ${eta.mins} 分鐘</span>
           <span class="device-eta-arrival">｜ 預計 ${eta.arrivalStr} 抵達${etaDestLabel}</span>
         </div>`;
+      } else {
+        etaEl.innerHTML = '';
       }
+    } else {
+      etaEl.innerHTML = '';
     }
-    const mapURL = buildDeviceMapURL(r, phase);
-    const staleWarn = isStale ? `<div class="device-map-stale-warn">⚠ 此裝置已超過 30 分鐘無新的 GPS 數據</div>` : '';
-    const noMissionOverlay = (phase === 'in' && !isStale)
-      ? `<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(247,245,242,0.88);padding:8px 12px;text-align:center;font-size:12px;color:var(--text-muted);">🏥 目前沒有出勤任務</div>`
-      : '';
-    return `<div class="device-map-card">
-      <div class="device-map-header">
-        <span class="device-map-name">${label}</span>
-        <span class="device-map-time">最後更新：${lastUpdateStr}</span>
-        <span class="device-map-status ${statusClass}">${statusText}</span>
-      </div>
-      ${etaRow}
-      <div class="device-map-frame" style="position:relative;">
-        <iframe src="${mapURL}" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-        ${noMissionOverlay}
-      </div>
-      ${staleWarn}
-    </div>`;
-  }));
-  grid.innerHTML = cards.join('');
-}
 
+    // iframe：只在 URL 真的變了才更新
+    const newMapURL = buildDeviceMapURL(r, phase);
+    const iframe    = frameEl.querySelector('iframe');
+
+    const syncInOverlay = () => {
+      const existing = frameEl.querySelector('.in-overlay');
+      if (phase === 'in' && !isStale) {
+        if (!existing) {
+          const el = document.createElement('div');
+          el.className = 'in-overlay';
+          el.style.cssText = 'position:absolute;bottom:0;left:0;right:0;background:rgba(247,245,242,0.88);padding:8px 12px;text-align:center;font-size:12px;color:var(--text-muted);';
+          el.textContent = '🏥 目前沒有出勤任務';
+          frameEl.appendChild(el);
+        }
+      } else {
+        if (existing) existing.remove();
+      }
+    };
+
+    if (!iframe) {
+      // 首次建立 iframe
+      frameEl.innerHTML = `<iframe src="${newMapURL}" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`;
+      deviceLastMapURL[i] = newMapURL;
+      syncInOverlay();
+    } else if (newMapURL !== deviceLastMapURL[i]) {
+      // phase 切換，src 要變：先疊 overlay 遮住載入空白
+      const loadingOverlay = document.createElement('div');
+      loadingOverlay.style.cssText = `
+        position:absolute;inset:0;
+        background:rgba(247,245,242,0.82);
+        display:flex;align-items:center;justify-content:center;
+        gap:8px;font-size:13px;color:var(--text-muted);
+        backdrop-filter:blur(2px);z-index:10;transition:opacity 0.3s;
+      `;
+      loadingOverlay.innerHTML = `<div class="suhua-spinner"></div><span>地圖切換中…</span>`;
+      frameEl.appendChild(loadingOverlay);
+
+      iframe.addEventListener('load', () => {
+        loadingOverlay.style.opacity = '0';
+        setTimeout(() => loadingOverlay.remove(), 300);
+      }, { once: true });
+
+      iframe.src = newMapURL;
+      deviceLastMapURL[i] = newMapURL;
+      syncInOverlay();
+    } else {
+      // URL 沒變，只更新院內 overlay
+      syncInOverlay();
+    }
+  }));
+}
 function startLiveUpdates() {
   updateLocationDisplay();
   fetchEarthquakes();
