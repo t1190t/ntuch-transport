@@ -1522,7 +1522,7 @@ const deviceLastMapURL = DEVICES.map(() => null);
 
 function ensureDeviceCards() {
   const grid = document.getElementById('device-maps-grid');
-  if (grid.querySelectorAll('.device-map-card').length === DEVICES.length) return;
+  if (document.getElementById('device-frame-0')) return;
   grid.innerHTML = DEVICES.map((device, i) => `
     <div class="device-map-card" id="device-card-${i}">
       <div class="device-map-header">
