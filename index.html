@@ -1689,6 +1689,7 @@ async function updateLocationDisplay() {
     }
 
     // ── 地圖：Static Maps 圖片，只在座標真的變了才換 src ──
+    const mapPhase = isStale ? 'in' : phase;
     const newMapURL = buildDeviceStaticMapURL(r, phase);
     const img = frameEl.querySelector('img');
 
