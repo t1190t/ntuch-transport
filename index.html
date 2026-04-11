@@ -99,7 +99,8 @@
   .empty-state p { font-size: 13px; font-weight: 300; }
   .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
   .stat-cell { background: var(--surface); padding: 14px 18px; text-align: center; }
-  .stat-num { font-family: var(--mono); font-size: 20px; font-weight: 300; color: var(--text); line-height: 1; margin-bottom: 3px; }
+  .stat-num { font-family: var(--mono); font-size: 20px; font-weight: 300; color: var(--text); line-height: 1; margin-bottom: 0px; } /* 這裡的 margin-bottom 改為 0px */
+  .stat-sub-counts { font-size: 9px; color: var(--text-muted); font-family: var(--mono); margin-bottom: 2px; margin-top: 3px; letter-spacing: 0.02em; }
   .stat-label { font-size: 10px; color: var(--text-muted); letter-spacing: 0.06em; text-transform: uppercase; }
   .no-result { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 32px 28px; text-align: center; color: var(--text-muted); }
   .no-result h3 { font-size: 15px; font-weight: 400; margin-bottom: 6px; color: var(--text); }
@@ -252,10 +253,11 @@
 
   <!-- Stats bar（數字由 API 動態填入）-->
   <div class="stats-bar">
-    <div class="stat-cell">
+        <div class="stat-cell">
       <div class="stat-num" id="stat-missions">—</div>
+      <div class="stat-sub-counts" id="stat-missions-breakdown">外接: — | 轉出: —</div>
       <div class="stat-label">歷史任務</div>
-    </div>
+    </div>       
     <div class="stat-cell">
       <div class="stat-num" id="stat-hospitals">—</div>
       <div class="stat-label">合作院所</div>
@@ -961,6 +963,14 @@ async function loadHospitalData() {
     const s = data.stats || {};
     const el = id => document.getElementById(id);
     if (el('stat-missions'))  el('stat-missions').textContent  = s.total_missions  ?? '—';
+    
+    // 增加這段綁定外接與轉出的數字
+    if (el('stat-missions-breakdown')) {
+      const outCount = s.outbound_missions ?? '—';
+      const transCount = s.transfer_missions ?? '—';
+      el('stat-missions-breakdown').textContent = `外接: ${outCount} | 轉出: ${transCount}`;
+    }
+
     if (el('stat-hospitals')) el('stat-hospitals').textContent = s.total_hospitals ?? '—';
     if (el('stat-counties'))  el('stat-counties').textContent  = s.total_counties  ?? '—';
     if (el('stat-years'))     el('stat-years').textContent     = s.years_span      ?? '—';
