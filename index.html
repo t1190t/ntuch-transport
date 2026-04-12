@@ -156,7 +156,7 @@
   .btn-clear:hover { border-color: var(--text); color: var(--text); background: var(--surface2); }
 
   /* ═════════ 統計數字列優化 ═════════ */
-  .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+  .stats-bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 24px; }
   .stat-cell { background: var(--surface); padding: 16px 20px; text-align: center; border-radius: 16px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); transition: transform 0.2s; }
   .stat-cell:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
   .stat-num { font-family: var(--mono); font-size: 24px; font-weight: 400; color: var(--text); line-height: 1; margin-bottom: 2px; }
@@ -393,6 +393,10 @@
     <div class="stat-cell">
       <div class="stat-num" id="stat-years">—</div>
       <div class="stat-label">年資料庫</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-num" id="stat-last-date">—</div>
+      <div class="stat-label">資料更新日期</div>
     </div>
   </div>
 
