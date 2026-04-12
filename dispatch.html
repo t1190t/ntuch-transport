@@ -19,6 +19,8 @@
     --accent-light: #edf2ec;
     --warn: #b85c1a;
     --warn-light: #fef3ec;
+    --info: #1a5a8a;
+    --info-light: #edf4fb;
     --tag-bg: #ede9e3;
     --mono: 'DM Mono', monospace;
     --sans: 'Noto Sans TC', sans-serif;
@@ -147,6 +149,49 @@
   }
   .task-option input:checked + label .task-name { color: var(--accent); }
   .task-option input:checked + label .task-desc { color: var(--accent); opacity: 0.7; }
+
+  /* ── Scheduled time picker ── */
+  .scheduled-picker {
+    display: none;
+    margin-top: 14px;
+  }
+  .scheduled-picker.show { display: block; }
+  .datetime-input {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 11px 14px;
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .datetime-input:focus { border-color: var(--accent); }
+
+  /* ── ETA display ── */
+  .eta-badge {
+    display: none;
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: var(--info-light);
+    border: 1px solid #b8d4ed;
+    border-radius: 7px;
+    font-size: 12px;
+    color: var(--info);
+    align-items: center;
+    gap: 6px;
+  }
+  .eta-badge.show { display: flex; }
+  .eta-spinner {
+    width: 10px; height: 10px;
+    border: 1.5px solid #b8d4ed;
+    border-top-color: var(--info);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
 
   /* ── Hospital search ── */
   .search-wrap { position: relative; }
@@ -455,6 +500,37 @@
       </div>
     </div>
 
+    <!-- 出勤時間 -->
+    <div class="form-section">
+      <label class="form-label">出勤時間</label>
+      <div class="task-toggle">
+        <div class="task-option">
+          <input type="radio" name="time-mode" id="time-now" value="now" checked>
+          <label for="time-now">
+            <span class="task-icon">⚡</span>
+            <div>
+              <div class="task-name">即刻出勤</div>
+              <div class="task-desc">使用當下時間</div>
+            </div>
+          </label>
+        </div>
+        <div class="task-option">
+          <input type="radio" name="time-mode" id="time-scheduled" value="scheduled">
+          <label for="time-scheduled">
+            <span class="task-icon">🗓️</span>
+            <div>
+              <div class="task-name">預計出勤</div>
+              <div class="task-desc">指定日期與時間</div>
+            </div>
+          </label>
+        </div>
+      </div>
+      <div class="scheduled-picker" id="scheduled-picker">
+        <input type="datetime-local" id="scheduled-datetime" class="datetime-input" />
+        <div style="font-size:10px;color:var(--text-muted);margin-top:5px;font-family:var(--mono);">請選擇預計出勤的日期與時間</div>
+      </div>
+    </div>
+
     <!-- 出勤地點 -->
     <div class="form-section">
       <label class="form-label">出勤地點</label>
@@ -469,6 +545,11 @@
       <div class="selected-hospital" id="selected-display">
         <span class="selected-hospital-name" id="selected-name"></span>
         <button class="selected-clear" onclick="clearHospital()" title="清除">✕</button>
+      </div>
+      <!-- ETA 顯示 -->
+      <div class="eta-badge" id="eta-badge">
+        <div class="eta-spinner" id="eta-spinner"></div>
+        <span id="eta-text">計算車程中…</span>
       </div>
       <div class="loading-hint" id="loading-hint">
         <div class="mini-spinner"></div>
@@ -536,10 +617,76 @@ const DASHBOARD_BASE = 'https://t1190t.github.io/ntuch-transport/';
 const HOSPITALS_CSV  = 'hospitals.csv';
 const BACKEND        = 'https://su-hua-dashboard.onrender.com';
 const WEBEX_LINK     = 'https://ntuhmeeting.webex.com/ntuhmeeting-tc/j.php?MTID=mefb688127166ca0e62fdf919ef00d469';
+const MAPS_API_KEY   = 'AIzaSyCLjGdhAYU2rmxDCpnhyq4r0L_sr_pvJoI';
+const NTUCH_LAT      = 25.0426;
+const NTUCH_LNG      = 121.5184;
 
 const KNOWN_HOSPITALS = new Set();
 let ALL_HOSPITALS    = [];
 let selectedHospital = null;
+let currentEtaText   = '';   // 儲存計算好的 ETA 文字
+let mapsApiLoaded    = false;
+
+// ── 載入 Google Maps API ──
+function loadMapsAPI() {
+  if (mapsApiLoaded) return;
+  mapsApiLoaded = true;
+  const s = document.createElement('script');
+  s.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_API_KEY}&callback=onMapsReady&language=zh-TW`;
+  s.async = true;
+  document.head.appendChild(s);
+}
+
+window.onMapsReady = function() {
+  if (selectedHospital) calculateETA(selectedHospital);
+};
+
+// ── 計算 ETA（台大兒童醫院 → 目的地）──
+function calculateETA(hospitalName) {
+  const badge   = document.getElementById('eta-badge');
+  const spinner = document.getElementById('eta-spinner');
+  const etaEl   = document.getElementById('eta-text');
+
+  badge.classList.add('show');
+  spinner.style.display = 'block';
+  etaEl.textContent = '計算車程中…';
+  currentEtaText = '';
+
+  if (!window.google || !window.google.maps) {
+    loadMapsAPI();
+    return;
+  }
+
+  const geocoder = new google.maps.Geocoder();
+  geocoder.geocode({ address: hospitalName + ' 台灣', region: 'TW' }, (results, status) => {
+    if (status !== 'OK' || !results[0]) {
+      badge.classList.remove('show');
+      currentEtaText = '';
+      return;
+    }
+
+    const destLat = results[0].geometry.location.lat();
+    const destLng = results[0].geometry.location.lng();
+
+    const service = new google.maps.DistanceMatrixService();
+    service.getDistanceMatrix({
+      origins: [{ lat: NTUCH_LAT, lng: NTUCH_LNG }],
+      destinations: [{ lat: destLat, lng: destLng }],
+      travelMode: 'DRIVING',
+      language: 'zh-TW'
+    }, (response, status) => {
+      spinner.style.display = 'none';
+      if (status === 'OK' && response.rows[0].elements[0].status === 'OK') {
+        const mins = Math.round(response.rows[0].elements[0].duration.value / 60);
+        currentEtaText = `約 ${mins} 分鐘`;
+        etaEl.textContent = `🚗 台大兒童 → 目的地：${currentEtaText}`;
+      } else {
+        badge.classList.remove('show');
+        currentEtaText = '';
+      }
+    });
+  });
+}
 
 // ── 載入 CSV ──
 async function loadHospitals() {
@@ -606,16 +753,42 @@ function selectHospital(name) {
   document.getElementById('selected-name').textContent = name;
   document.getElementById('selected-display').classList.add('show');
   checkFormReady();
+  calculateETA(name);   // 選定院所後立即計算 ETA
 }
 
 function clearHospital() {
   selectedHospital = null;
+  currentEtaText = '';
   hospitalInput.value = '';
   hospitalInput.placeholder = '輸入關鍵字，例：慈濟、長庚、成大…';
   document.getElementById('selected-display').classList.remove('show');
+  document.getElementById('eta-badge').classList.remove('show');
   document.getElementById('result-panel').classList.remove('show');
   checkFormReady();
 }
+
+// ── 出勤時間模式切換 ──
+document.querySelectorAll('input[name="time-mode"]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    const picker = document.getElementById('scheduled-picker');
+    if (radio.value === 'scheduled') {
+      picker.classList.add('show');
+      // 預設為現在時間 + 1 小時
+      const dtInput = document.getElementById('scheduled-datetime');
+      if (!dtInput.value) {
+        const now = new Date();
+        now.setHours(now.getHours() + 1);
+        now.setSeconds(0, 0);
+        // datetime-local 格式：YYYY-MM-DDTHH:MM
+        const localIso = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+          .toISOString().slice(0, 16);
+        dtInput.value = localIso;
+      }
+    } else {
+      picker.classList.remove('show');
+    }
+  });
+});
 
 function updateCharCount() {
   const len = document.getElementById('patient-notes').value.length;
@@ -626,29 +799,61 @@ function checkFormReady() {
   document.getElementById('dispatch-btn').disabled = !selectedHospital;
 }
 
+// ── 產生時間字串 ──
+function buildTimeString() {
+  const timeMode = document.querySelector('input[name="time-mode"]:checked').value;
+
+  if (timeMode === 'scheduled') {
+    const dtInput = document.getElementById('scheduled-datetime');
+    if (!dtInput.value) {
+      alert('請選擇預計出勤時間');
+      return null;
+    }
+    const dt = new Date(dtInput.value);
+    const formatted = dt.toLocaleString('zh-TW', {
+      timeZone: 'Asia/Taipei',
+      month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit',
+      hourCycle: 'h23'
+    });
+    return '預計 ' + formatted;
+  } else {
+    const now = new Date();
+    return now.toLocaleString('zh-TW', {
+      timeZone: 'Asia/Taipei',
+      month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit',
+      hourCycle: 'h23'
+    });
+  }
+}
+
 // ── 產生並發送出勤通知 ──
 async function generateDispatch() {
   if (!selectedHospital) return;
 
   const taskType = document.querySelector('input[name="task-type"]:checked').value;
   const notes    = document.getElementById('patient-notes').value.trim();
-  const now      = new Date();
-  const timeStr  = now.toLocaleString('zh-TW', {
-    timeZone: 'Asia/Taipei',
-    month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
-  });
+  const timeStr  = buildTimeString();
+  if (!timeStr) return;   // 預計出勤但未填時間，已 alert
 
   const dashboardURL = `${DASHBOARD_BASE}?hospital=${encodeURIComponent(selectedHospital)}`;
 
-  // 組合訊息
+  // ── 組合訊息（前端預覽 + 後端參考）──
   const msgLines = [
     `🚑 台大兒童醫院 出勤通知`,
     ``,
     `任務類型：${taskType === '外接' ? '🔵 外接任務' : '🟠 轉出任務'}`,
+  ];
+
+  if (currentEtaText) {
+    msgLines.push(`預計車程：${currentEtaText}（台大兒童 → 目的地）`);
+  }
+
+  msgLines.push(
     `出勤地點：${selectedHospital}`,
     `出勤時間：${timeStr}`,
-  ];
+  );
 
   if (notes) {
     msgLines.push(``, `病人概況：`, notes);
@@ -659,7 +864,7 @@ async function generateDispatch() {
     `📊 即時資訊 Dashboard：`,
     dashboardURL,
     ``,
-    `📹 轉診直播連結：`,
+    `📹 轉診眼鏡連結：`,
     WEBEX_LINK
   );
 
@@ -682,6 +887,8 @@ async function generateDispatch() {
         notes:         notes,
         time_str:      timeStr,
         dashboard_url: dashboardURL,
+        eta_text:      currentEtaText,
+        webex_link:    WEBEX_LINK,
       }),
     });
     const result = await resp.json();
@@ -752,6 +959,7 @@ function copyMessage() {
 
 // ── 初始化 ──
 loadHospitals();
+loadMapsAPI();   // 預先載入 Maps API，讓 ETA 算得更快
 </script>
 </body>
 </html>
