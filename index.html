@@ -406,6 +406,7 @@
 let TIME_DB = {};
 let DB      = {};
 let ALL_NAMES = [];
+let ALL_NHI_HOSPITALS = [];
 
 const EAST_COUNTIES  = ['花蓮', '台東', '宜蘭'];
 const SUHUA_BACKEND  = 'https://su-hua-dashboard.onrender.com';
@@ -428,15 +429,24 @@ let selectedName = null;
 searchInput.addEventListener('input', () => {
   const q = searchInput.value.trim();
   if (!q) { hideSuggestions(); return; }
-  const matches = ALL_NAMES.filter(n => n.includes(q)).slice(0, 12);
-  if (!matches.length) { hideSuggestions(); return; }
-  suggestionsEl.innerHTML = matches.map(name => {
+  const dbMatches  = ALL_NAMES.filter(n => n.includes(q)).slice(0, 8);
+  const nihMatches = ALL_NHI_HOSPITALS.filter(n => n.includes(q)).slice(0, 12 - dbMatches.length);
+  if (!dbMatches.length && !nihMatches.length) { hideSuggestions(); return; }
+  const dbItems = dbMatches.map(name => {
     const hl = name.replace(q, `<mark>${q}</mark>`);
     return `<div class="suggestion-item" onclick="selectHospital('${name.replace(/'/g,"\\'")}')">
       <span class="suggestion-name">${hl}</span>
       <span class="suggestion-count">${DB[name].count} 次</span>
     </div>`;
-  }).join('');
+  });
+  const nihItems = nihMatches.map(name => {
+    const hl = name.replace(q, `<mark>${q}</mark>`);
+    return `<div class="suggestion-item" onclick="selectHospital('${name.replace(/'/g,"\\'")}')">
+      <span class="suggestion-name">${hl}</span>
+      <span class="suggestion-count" style="background:var(--info-light);color:var(--info);">首次出勤</span>
+    </div>`;
+  });
+  suggestionsEl.innerHTML = [...dbItems, ...nihItems].join('');
   suggestionsEl.classList.add('open');
 });
 
@@ -463,7 +473,8 @@ function doSearch() {
   if (!q) return;
   hideSuggestions();
   if (DB[q]) { showResult(q); return; }
-  const match = ALL_NAMES.find(n => n.includes(q));
+  const match = ALL_NAMES.find(n => n.includes(q))
+             || ALL_NHI_HOSPITALS.find(n => n.includes(q));
   if (match) { showResult(match); return; }
   document.getElementById('empty-state').style.display = 'none';
   document.getElementById('result-area').classList.add('visible');
@@ -486,6 +497,32 @@ function clearSearch() {
 }
 
 function showResult(name) {
+  // ── 若無歷史紀錄，顯示首次出勤提示，但仍跑地圖/天氣 ──
+  if (!DB[name]) {
+    document.getElementById('empty-state').style.display = 'none';
+    document.getElementById('result-area').classList.add('visible');
+    document.getElementById('result-content').innerHTML = `
+      <div class="hospital-header">
+        <div class="hospital-name-area">
+          <h2>${name}</h2>
+          <div class="tags">
+            <span class="tag" style="background:var(--info-light);color:var(--info);">首次出勤</span>
+          </div>
+        </div>
+        <div class="mission-count-box">
+          <div class="mission-count-num" style="color:var(--text-muted);">0</div>
+          <div class="mission-count-label">歷史出勤次數</div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:16px;text-align:center;padding:28px 24px;">
+        <div style="font-size:22px;margin-bottom:10px;">🚑</div>
+        <div style="font-size:15px;font-weight:500;color:var(--text);margin-bottom:6px;">此為第一次出勤的院所！</div>
+        <div style="font-size:13px;color:var(--text-muted);">尚無歷史聯絡電話及出勤紀錄，地圖與天氣資訊仍可正常使用。</div>
+      </div>`;
+    hideSuhuaPanel();
+    return;
+  }
+
   const hosp = DB[name];
   document.getElementById('empty-state').style.display = 'none';
   document.getElementById('result-area').classList.add('visible');
@@ -931,20 +968,64 @@ const _origShowResult = showResult;
 window.showResult = async function(name) {
   _origShowResult(name);
   const hosp = DB[name];
-  currentDestName = name; currentDestCounty = hosp.county || '台北市';
-  DEVICES.forEach((_,i)=>{deviceDwellState[i].arrivedAt=null;deviceDwellState[i].confirmedDwell=false;});
-  const mapContainer = document.getElementById('map-container');
-  mapContainer.style.height = '380px';
-  mapContainer.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;line-height:380px;">地圖載入中…</div>';
-  document.getElementById('travel-time-badge').style.display = 'none';
-  try {
-    const coords = await geocodeHospital(name, currentDestCounty);
-    if (coords) {
-      currentDestLat = coords.lat; currentDestLng = coords.lng;
-      loadMapsAPI(); if (window.google) renderMap();
-    } else { mapContainer.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;line-height:380px;">地圖服務異常</div>'; }
-  } catch(e) { mapContainer.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;line-height:380px;">地圖服務異常</div>'; }
-  fetchWeather(currentDestCounty);
+  // 取得縣市：有 DB 紀錄用 DB，否則靠 geocoder 反推
+  if (hosp) {
+    currentDestName = name; currentDestCounty = hosp.county || '台北市';
+    DEVICES.forEach((_,i)=>{deviceDwellState[i].arrivedAt=null;deviceDwellState[i].confirmedDwell=false;});
+    const mapContainer = document.getElementById('map-container');
+    mapContainer.style.height = '380px';
+    mapContainer.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;line-height:380px;">地圖載入中…</div>';
+    document.getElementById('travel-time-badge').style.display = 'none';
+    try {
+      const coords = await geocodeHospital(name, currentDestCounty);
+      if (coords) {
+        currentDestLat = coords.lat; currentDestLng = coords.lng;
+        loadMapsAPI(); if (window.google) renderMap();
+      } else { mapContainer.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;line-height:380px;">地圖服務異常</div>'; }
+    } catch(e) { mapContainer.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;line-height:380px;">地圖服務異常</div>'; }
+    fetchWeather(currentDestCounty);
+  } else {
+    // 首次出勤院所：靠 geocoder 取得座標與縣市
+    currentDestName = name;
+    DEVICES.forEach((_,i)=>{deviceDwellState[i].arrivedAt=null;deviceDwellState[i].confirmedDwell=false;});
+    const mapContainer = document.getElementById('map-container');
+    mapContainer.style.height = '380px';
+    mapContainer.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;line-height:380px;">地圖載入中…</div>';
+    document.getElementById('travel-time-badge').style.display = 'none';
+    loadMapsAPI();
+    // 等 Maps API 就緒後 geocode
+    const doGeocode = async () => {
+      if (!window.google || !window.google.maps || !window.google.maps.Geocoder) {
+        setTimeout(doGeocode, 500); return;
+      }
+      try {
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ address: name + ' 台灣', region: 'TW' }, async (results, status) => {
+          if (status !== 'OK' || !results[0]) {
+            mapContainer.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;line-height:380px;">地圖服務異常</div>';
+            return;
+          }
+          const loc = results[0].geometry.location;
+          currentDestLat = loc.lat(); currentDestLng = loc.lng();
+          // 從 address_components 推縣市
+          let county = '';
+          for (const c of (results[0].address_components || [])) {
+            if (c.types.includes('administrative_area_level_1')) {
+              county = c.long_name.replace('縣','').replace('市','').replace('臺','台');
+              break;
+            }
+          }
+          currentDestCounty = county || '台北市';
+          renderMap();
+          fetchWeather(currentDestCounty);
+          if (EAST_COUNTIES.includes(currentDestCounty)) showSuhuaPanel(currentDestCounty);
+        });
+      } catch(e) {
+        mapContainer.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;line-height:380px;">地圖服務異常</div>';
+      }
+    };
+    doGeocode();
+  }
 };
 
 // ══ 動態載入醫院資料庫 ══
@@ -983,15 +1064,35 @@ async function loadHospitalData() {
   }
 }
 
+// ══ 載入 NHI 院所名單（作為首次出勤的備援搜尋）══
+async function loadNHIHospitals() {
+  try {
+    const res  = await fetch('https://t1190t.github.io/ntuch-transport/hospitals.csv');
+    const text = await res.text();
+    const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/);
+    const seen  = new Set(ALL_NAMES);
+    lines.forEach(line => {
+      const name = line.trim();
+      if (!name || name === '醫事機構名稱' || seen.has(name)) return;
+      seen.add(name);
+      ALL_NHI_HOSPITALS.push(name);
+    });
+    console.log(`[NHI] 載入 ${ALL_NHI_HOSPITALS.length} 家備援院所`);
+  } catch(e) {
+    console.warn('[NHI] CSV 載入失敗', e);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   loadMapsAPI();
   startLiveUpdates();
 
-  // 先載入醫院資料庫，載入完成後再檢查網址參數
-  loadHospitalData().then(() => {
+  // 先載入醫院資料庫，載入完成後再載入 NHI 備援名單，再檢查網址參數
+  loadHospitalData().then(async () => {
+    await loadNHIHospitals();
     const params = new URLSearchParams(window.location.search);
     const hospitalParam = params.get('hospital');
-    if (hospitalParam && DB[hospitalParam]) {
+    if (hospitalParam) {
       searchInput.value = hospitalParam;
       showResult(hospitalParam);
     }
