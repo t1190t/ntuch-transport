@@ -395,7 +395,7 @@
       <div class="stat-label">年資料庫</div>
     </div>
     <div class="stat-cell">
-      <div class="stat-num" id="stat-last-date">—</div>
+      <div class="stat-num" id="stat-last-date" style="font-size:14px; line-height:1.4;">—</div>
       <div class="stat-label">資料更新日期</div>
     </div>
   </div>
@@ -1171,6 +1171,7 @@ async function loadHospitalData() {
     if (el('stat-hospitals')) el('stat-hospitals').textContent = s.total_hospitals ?? '—';
     if (el('stat-counties'))  el('stat-counties').textContent  = s.total_counties  ?? '—';
     if (el('stat-years'))     el('stat-years').textContent     = s.years_span      ?? '—';
+    if (el('stat-last-date')) el('stat-last-date').textContent = s.last_date ?? '—';
 
     if (banner) banner.style.display = 'none';
     console.log(`[hospital] 載入完成：${ALL_NAMES.length} 家醫院`);
