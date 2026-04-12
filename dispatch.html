@@ -279,17 +279,15 @@
     font-size: 15px;
     font-weight: 500;
     cursor: pointer;
-    transition: opacity 0.2s;
+    transition: opacity 0.2s, background 0.3s;
     letter-spacing: 0.02em;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
   }
-  .btn-dispatch:hover { opacity: 0.82; }
-  .btn-dispatch:disabled {
-    opacity: 0.35; cursor: not-allowed;
-  }
+  .btn-dispatch:hover:not(:disabled) { opacity: 0.82; }
+  .btn-dispatch:disabled { opacity: 0.35; cursor: not-allowed; }
 
   /* ── Result panel ── */
   #result-panel {
@@ -377,7 +375,6 @@
   }
   .copy-toast.show { display: block; }
 
-  /* loading state */
   .loading-hint {
     font-size: 11px;
     color: var(--text-muted);
@@ -397,7 +394,6 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* scrollbar */
   .suggestions::-webkit-scrollbar { width: 5px; }
   .suggestions::-webkit-scrollbar-track { background: transparent; }
   .suggestions::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -428,7 +424,7 @@
 
 <main>
   <div class="page-title">出勤派遣</div>
-  <div class="page-subtitle">填寫後產生出勤通知連結，可複製至 LINE 群組</div>
+  <div class="page-subtitle">填寫後自動發送 LINE 群組通知</div>
 
   <div class="form-card">
 
@@ -496,7 +492,7 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
         </svg>
-        產生出勤通知
+        發送出勤通知
       </button>
     </div>
 
@@ -508,7 +504,7 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="20 6 9 17 4 12"/>
       </svg>
-      <span class="result-header-title">出勤通知已產生</span>
+      <span class="result-header-title">出勤通知已發送至 LINE 群組</span>
     </div>
     <div class="result-body">
       <div class="message-preview" id="message-preview"></div>
@@ -537,25 +533,22 @@
 <script>
 // ── 設定 ──
 const DASHBOARD_BASE = 'https://t1190t.github.io/ntuch-transport/';
-const HOSPITALS_CSV  = 'hospitals.csv';  // 放在同一個 repo 根目錄
+const HOSPITALS_CSV  = 'hospitals.csv';
+const BACKEND        = 'https://su-hua-dashboard.onrender.com';
+const WEBEX_LINK     = 'https://ntuhmeeting.webex.com/ntuhmeeting-tc/j.php?MTID=mefb688127166ca0e62fdf919ef00d469';
 
-// ── 已有出勤紀錄的院所（從主系統抓）──
-// 這裡直接從後端動態讀，或直接 hardcode 常用清單
 const KNOWN_HOSPITALS = new Set();
-
-// ── 全院所清單 ──
-let ALL_HOSPITALS = [];
+let ALL_HOSPITALS    = [];
 let selectedHospital = null;
 
 // ── 載入 CSV ──
 async function loadHospitals() {
   try {
-    const res  = await fetch(HOSPITALS_CSV);
-    const text = await res.text();
-    // 移除 BOM、分行、過濾空白、去重
+    const res   = await fetch(HOSPITALS_CSV);
+    const text  = await res.text();
     const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/);
     const seen  = new Set();
-    lines.forEach((line, idx) => {
+    lines.forEach(line => {
       const name = line.trim();
       if (!name || name === '醫事機構名稱' || seen.has(name)) return;
       seen.add(name);
@@ -572,30 +565,26 @@ async function loadHospitals() {
 }
 
 // ── 搜尋邏輯 ──
-const hospitalInput  = document.getElementById('hospital-input');
-const suggestionsEl  = document.getElementById('suggestions');
+const hospitalInput = document.getElementById('hospital-input');
+const suggestionsEl = document.getElementById('suggestions');
 
 hospitalInput.disabled = true;
 
 hospitalInput.addEventListener('input', () => {
   const q = hospitalInput.value.trim();
-  if (!q || q.length < 1) { hideSuggestions(); return; }
-
-  const matches = ALL_HOSPITALS
-    .filter(n => n.includes(q))
-    .slice(0, 15);
-
+  if (!q) { hideSuggestions(); return; }
+  const matches = ALL_HOSPITALS.filter(n => n.includes(q)).slice(0, 15);
   if (!matches.length) { hideSuggestions(); return; }
-
   suggestionsEl.innerHTML = matches.map(name => {
     const isKnown = KNOWN_HOSPITALS.has(name);
     const hl = name.replace(q, `<mark>${q}</mark>`);
     return `<div class="suggestion-item" onclick="selectHospital('${name.replace(/'/g,"\\'")}')">
       <span>${hl}</span>
-      ${isKnown ? '<span class="suggestion-badge known">有紀錄</span>' : '<span class="suggestion-badge">查詢地圖</span>'}
+      ${isKnown
+        ? '<span class="suggestion-badge known">有紀錄</span>'
+        : '<span class="suggestion-badge">查詢地圖</span>'}
     </div>`;
   }).join('');
-
   suggestionsEl.classList.add('open');
 });
 
@@ -607,9 +596,7 @@ document.addEventListener('click', e => {
   if (!e.target.closest('#hospital-wrap')) hideSuggestions();
 });
 
-function hideSuggestions() {
-  suggestionsEl.classList.remove('open');
-}
+function hideSuggestions() { suggestionsEl.classList.remove('open'); }
 
 function selectHospital(name) {
   selectedHospital = name;
@@ -630,20 +617,17 @@ function clearHospital() {
   checkFormReady();
 }
 
-// ── 字數統計 ──
 function updateCharCount() {
   const len = document.getElementById('patient-notes').value.length;
   document.getElementById('char-hint').textContent = `${len} / 300`;
 }
 
-// ── 送出按鈕開關 ──
 function checkFormReady() {
-  const ready = !!selectedHospital;
-  document.getElementById('dispatch-btn').disabled = !ready;
+  document.getElementById('dispatch-btn').disabled = !selectedHospital;
 }
 
-// ── 產生出勤通知 ──
-function generateDispatch() {
+// ── 產生並發送出勤通知 ──
+async function generateDispatch() {
   if (!selectedHospital) return;
 
   const taskType = document.querySelector('input[name="task-type"]:checked').value;
@@ -657,6 +641,7 @@ function generateDispatch() {
 
   const dashboardURL = `${DASHBOARD_BASE}?hospital=${encodeURIComponent(selectedHospital)}`;
 
+  // 組合訊息
   const msgLines = [
     `🚑 台大兒童醫院 出勤通知`,
     ``,
@@ -669,13 +654,59 @@ function generateDispatch() {
     msgLines.push(``, `病人概況：`, notes);
   }
 
-  msgLines.push(``);
-  msgLines.push(`📊 即時資訊 Dashboard：`);
-  msgLines.push(dashboardURL);
+  msgLines.push(
+    ``,
+    `📊 即時資訊 Dashboard：`,
+    dashboardURL,
+    ``,
+    `📹 轉診直播連結：`,
+    WEBEX_LINK
+  );
 
   const fullMessage = msgLines.join('\n');
   document.getElementById('message-preview').textContent = fullMessage;
   document.getElementById('result-panel').classList.add('show');
+
+  // 按鈕改為發送中
+  const btn = document.getElementById('dispatch-btn');
+  btn.disabled = true;
+  btn.innerHTML = `<div class="mini-spinner" style="width:14px;height:14px;border-width:2px;border-top-color:white;flex-shrink:0;"></div> 發送中…`;
+
+  try {
+    const resp = await fetch(`${BACKEND}/api/line-notify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        hospital:      selectedHospital,
+        task_type:     taskType,
+        notes:         notes,
+        time_str:      timeStr,
+        dashboard_url: dashboardURL,
+      }),
+    });
+    const result = await resp.json();
+
+    if (result.status === 'sent') {
+      btn.innerHTML = `✓ 已發送至 LINE 群組`;
+      btn.style.background = 'var(--accent)';
+      document.querySelector('.result-header-title').textContent = '出勤通知已發送至 LINE 群組 ✓';
+    } else {
+      throw new Error(result.error || '未知錯誤');
+    }
+  } catch(e) {
+    console.error('[LINE notify]', e);
+    btn.innerHTML = `⚠ LINE 發送失敗，請手動複製訊息`;
+    btn.style.background = 'var(--warn)';
+    btn.disabled = false;
+    document.querySelector('.result-header-title').textContent = '請手動複製訊息貼到 LINE 群組';
+  }
+
+  // 4 秒後恢復按鈕
+  setTimeout(() => {
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> 發送出勤通知`;
+    btn.style.background = 'var(--text)';
+    btn.disabled = false;
+  }, 4000);
 
   // 捲動到結果面板
   setTimeout(() => {
@@ -694,30 +725,29 @@ function showToast(msg) {
 function copyLink() {
   if (!selectedHospital) return;
   const url = `${DASHBOARD_BASE}?hospital=${encodeURIComponent(selectedHospital)}`;
-  navigator.clipboard.writeText(url).then(() => {
-    showToast('✓ Dashboard 連結已複製');
-  }).catch(() => {
-    // fallback
-    const ta = document.createElement('textarea');
-    ta.value = url; document.body.appendChild(ta);
-    ta.select(); document.execCommand('copy');
-    document.body.removeChild(ta);
-    showToast('✓ Dashboard 連結已複製');
-  });
+  navigator.clipboard.writeText(url)
+    .then(() => showToast('✓ Dashboard 連結已複製'))
+    .catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = url; document.body.appendChild(ta);
+      ta.select(); document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('✓ Dashboard 連結已複製');
+    });
 }
 
 function copyMessage() {
   const msg = document.getElementById('message-preview').textContent;
   if (!msg) return;
-  navigator.clipboard.writeText(msg).then(() => {
-    showToast('✓ 完整訊息已複製，可貼到 LINE 群組');
-  }).catch(() => {
-    const ta = document.createElement('textarea');
-    ta.value = msg; document.body.appendChild(ta);
-    ta.select(); document.execCommand('copy');
-    document.body.removeChild(ta);
-    showToast('✓ 完整訊息已複製，可貼到 LINE 群組');
-  });
+  navigator.clipboard.writeText(msg)
+    .then(() => showToast('✓ 完整訊息已複製，可貼到 LINE 群組'))
+    .catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = msg; document.body.appendChild(ta);
+      ta.select(); document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('✓ 完整訊息已複製，可貼到 LINE 群組');
+    });
 }
 
 // ── 初始化 ──
