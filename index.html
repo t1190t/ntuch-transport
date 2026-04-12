@@ -270,9 +270,10 @@
       <div class="stat-num" id="stat-years">—</div>
       <div class="stat-label">年資料庫</div>
     </div>
-      <div class="stat-cell">
-      <div class="stat-num" id="stat-last-date" style="font-size:16px;">—</div>
+    <div class="stat-cell">
+      <div class="stat-num" id="stat-last-date" style="font-size:15px;">—</div>
       <div class="stat-label">資料更新日期</div>
+    </div>
   </div>
 
   <!-- 載入提示 -->
@@ -731,7 +732,7 @@ const CWA_API_KEY  = 'CWA-B3D5458A-4530-4045-A702-27A786C1E934';
 const SHEETS_ID    = '1y5oMPbBTpqIYuDQqlZbz8hkUS4mvrVwFeAEAc64KXgo';
 const NTUCH_LAT    = 25.0426;
 const NTUCH_LNG    = 121.5184;
-const NTUCH_RADIUS_M = 600;
+const NTUCH_RADIUS_M = 600;  // 放大緩衝，防止 GPS 飄移誤判院內裝置為出勤中
 const DEST_RADIUS_M  = 400;
 
 const DEVICES = [
@@ -927,8 +928,8 @@ async function updateLocationDisplay(){
     const dwell=deviceDwellState[i];
     if(!r){statusEl.className='device-map-status stale';statusEl.textContent='無資料';timeEl2.textContent='—';etaEl.innerHTML='';staleEl.innerHTML='';if(!frameEl.querySelector('img'))frameEl.innerHTML='<div class="device-map-overlay">無法取得定位資料</div>';return;}
     const distNTUCH=haversine(r.lat,r.lng,NTUCH_LAT,NTUCH_LNG);
-    const gpsBuffer = Math.min(r.acc || 0, 150);   // GPS 精準度緩衝，最多 150m
-    const isOutside=distNTUCH>(NTUCH_RADIUS_M + gpsBuffer);const dataAge=now-new Date(r.time).getTime();const isStale=dataAge>STALE_MS;
+    const gpsBuffer=Math.min(r.acc||0,150);  // GPS 精準度緩衝，最多 150m
+    const isOutside=distNTUCH>(NTUCH_RADIUS_M+gpsBuffer);const dataAge=now-new Date(r.time).getTime();const isStale=dataAge>STALE_MS;
     const distNTUCHText=distNTUCH>1000?`${(distNTUCH/1000).toFixed(1)} km`:`${Math.round(distNTUCH)} m`;
     timeEl2.textContent=`最後更新：${formatTWTime(r.time)}`;
     let phase='in';
@@ -1059,9 +1060,7 @@ async function loadHospitalData() {
     if (el('stat-hospitals')) el('stat-hospitals').textContent = s.total_hospitals ?? '—';
     if (el('stat-counties'))  el('stat-counties').textContent  = s.total_counties  ?? '—';
     if (el('stat-years'))     el('stat-years').textContent     = s.years_span      ?? '—';
-    if (el('stat-last-date')) el('stat-last-date').textContent = s.last_outbound_date || '—';  
-
-    if (banner) banner.style.display = 'none';
+    if (el('stat-last-date')) el('stat-last-date').textContent = s.last_outbound_date || '—';
 
     if (banner) banner.style.display = 'none';
     console.log(`[hospital] 載入完成：${ALL_NAMES.length} 家醫院`);
