@@ -97,7 +97,7 @@
   .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); }
   .empty-state svg { width: 48px; height: 48px; margin: 0 auto 16px; opacity: 0.25; }
   .empty-state p { font-size: 13px; font-weight: 300; }
-  .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+  .stats-bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
   .stat-cell { background: var(--surface); padding: 14px 18px; text-align: center; }
   .stat-num { font-family: var(--mono); font-size: 20px; font-weight: 300; color: var(--text); line-height: 1; margin-bottom: 0px; } /* 這裡的 margin-bottom 改為 0px */
   .stat-sub-counts { font-size: 9px; color: var(--text-muted); font-family: var(--mono); margin-bottom: 2px; margin-top: 3px; letter-spacing: 0.02em; }
@@ -270,6 +270,9 @@
       <div class="stat-num" id="stat-years">—</div>
       <div class="stat-label">年資料庫</div>
     </div>
+      <div class="stat-cell">
+      <div class="stat-num" id="stat-last-date" style="font-size:16px;">—</div>
+      <div class="stat-label">資料更新日期</div>
   </div>
 
   <!-- 載入提示 -->
@@ -728,7 +731,7 @@ const CWA_API_KEY  = 'CWA-B3D5458A-4530-4045-A702-27A786C1E934';
 const SHEETS_ID    = '1y5oMPbBTpqIYuDQqlZbz8hkUS4mvrVwFeAEAc64KXgo';
 const NTUCH_LAT    = 25.0426;
 const NTUCH_LNG    = 121.5184;
-const NTUCH_RADIUS_M = 200;
+const NTUCH_RADIUS_M = 600;
 const DEST_RADIUS_M  = 400;
 
 const DEVICES = [
@@ -924,7 +927,8 @@ async function updateLocationDisplay(){
     const dwell=deviceDwellState[i];
     if(!r){statusEl.className='device-map-status stale';statusEl.textContent='無資料';timeEl2.textContent='—';etaEl.innerHTML='';staleEl.innerHTML='';if(!frameEl.querySelector('img'))frameEl.innerHTML='<div class="device-map-overlay">無法取得定位資料</div>';return;}
     const distNTUCH=haversine(r.lat,r.lng,NTUCH_LAT,NTUCH_LNG);
-    const isOutside=distNTUCH>NTUCH_RADIUS_M;const dataAge=now-new Date(r.time).getTime();const isStale=dataAge>STALE_MS;
+    const gpsBuffer = Math.min(r.acc || 0, 150);   // GPS 精準度緩衝，最多 150m
+    const isOutside=distNTUCH>(NTUCH_RADIUS_M + gpsBuffer);const dataAge=now-new Date(r.time).getTime();const isStale=dataAge>STALE_MS;
     const distNTUCHText=distNTUCH>1000?`${(distNTUCH/1000).toFixed(1)} km`:`${Math.round(distNTUCH)} m`;
     timeEl2.textContent=`最後更新：${formatTWTime(r.time)}`;
     let phase='in';
@@ -1055,6 +1059,9 @@ async function loadHospitalData() {
     if (el('stat-hospitals')) el('stat-hospitals').textContent = s.total_hospitals ?? '—';
     if (el('stat-counties'))  el('stat-counties').textContent  = s.total_counties  ?? '—';
     if (el('stat-years'))     el('stat-years').textContent     = s.years_span      ?? '—';
+    if (el('stat-last-date')) el('stat-last-date').textContent = s.last_outbound_date || '—';  
+
+    if (banner) banner.style.display = 'none';
 
     if (banner) banner.style.display = 'none';
     console.log(`[hospital] 載入完成：${ALL_NAMES.length} 家醫院`);
