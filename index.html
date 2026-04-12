@@ -986,7 +986,16 @@ async function loadHospitalData() {
 document.addEventListener('DOMContentLoaded', () => {
   loadMapsAPI();
   startLiveUpdates();
-  loadHospitalData();
+
+  // 先載入醫院資料庫，載入完成後再檢查網址參數
+  loadHospitalData().then(() => {
+    const params = new URLSearchParams(window.location.search);
+    const hospitalParam = params.get('hospital');
+    if (hospitalParam && DB[hospitalParam]) {
+      searchInput.value = hospitalParam;
+      showResult(hospitalParam);
+    }
+  });
 });
 </script>
 </body>
