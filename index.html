@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
 <style>
+  /* ═════════ 顏色變數 ═════════ */
   :root {
     --bg: #f7f5f2;
     --surface: #ffffff;
@@ -22,214 +23,338 @@
     --info: #1a5a8a;
     --info-light: #edf4fb;
     --tag-bg: #ede9e3;
-    --mono: 'DM Mono', monospace;
-    --sans: 'Noto Sans TC', sans-serif;
+    
     --suhua-bg: #fefcf9;
     --suhua-border: #e8b87a;
     --suhua-header: #7c4a10;
     --suhua-header-bg: #fff4e6;
+    
     --road-green: #166534;
     --road-green-bg: #dcfce7;
     --road-yellow: #92400e;
     --road-yellow-bg: #fef9c3;
     --road-red: #991b1b;
     --road-red-bg: #fee2e2;
+    
     --eq-high-bg: #fee2e2;
     --eq-high-fg: #991b1b;
     --eq-mid-bg: #fef9c3;
     --eq-mid-fg: #92400e;
     --eq-low-bg: #f1f5f9;
     --eq-low-fg: #475569;
+
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
+    --header-bg: rgba(255, 255, 255, 0.85);
+
+    --mono: 'DM Mono', monospace;
+    --sans: 'Noto Sans TC', sans-serif;
   }
+
+  /* ═════════ 自動夜間模式 ═════════ */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121212;
+      --surface: #1e1e1e;
+      --surface2: #2a2a2a;
+      --border: #333333;
+      --text: #e0e0e0;
+      --text-muted: #9e9e9e;
+      --text-light: #666666;
+      --accent: #81c784;
+      --accent-light: rgba(129, 199, 132, 0.15);
+      --warn: #ffb74d;
+      --warn-light: rgba(255, 183, 77, 0.15);
+      --info: #64b5f6;
+      --info-light: rgba(100, 181, 246, 0.15);
+      --tag-bg: #2a2a2a;
+      
+      --suhua-bg: #1a1510;
+      --suhua-border: #4a3318;
+      --suhua-header: #e6c8a3;
+      --suhua-header-bg: #2a1f12;
+      
+      --road-green: #81c784;
+      --road-green-bg: rgba(46, 125, 50, 0.2);
+      --road-yellow: #ffd54f;
+      --road-yellow-bg: rgba(245, 127, 23, 0.2);
+      --road-red: #e57373;
+      --road-red-bg: rgba(198, 40, 40, 0.2);
+      
+      --eq-high-bg: rgba(198, 40, 40, 0.2);
+      --eq-high-fg: #e57373;
+      --eq-mid-bg: rgba(245, 127, 23, 0.2);
+      --eq-mid-fg: #ffd54f;
+      --eq-low-bg: #2a2a2a;
+      --eq-low-fg: #9e9e9e;
+
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.2);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.3);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.4);
+      --header-bg: rgba(30, 30, 30, 0.85);
+    }
+    .logo-mark { background: var(--text) !important; }
+    .logo-mark svg { color: var(--bg) !important; }
+  }
+
+  /* ═════════ 基礎設定 ═════════ */
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); font-family: var(--sans); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.6; }
-  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 32px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  body { background: var(--bg); font-family: var(--sans); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.6; transition: background-color 0.3s, color 0.3s; }
+  
+  /* ═════════ Header 毛玻璃 ═════════ */
+  header { 
+    background: var(--header-bg); 
+    backdrop-filter: blur(12px); 
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border); 
+    padding: 0 32px; 
+    height: 60px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    position: sticky; 
+    top: 0; 
+    z-index: 100; 
+    box-shadow: var(--shadow-sm);
+  }
   .header-left { display: flex; align-items: center; gap: 12px; }
-  .logo-mark { width: 32px; height: 32px; background: var(--text); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .logo-mark { width: 34px; height: 34px; background: var(--text); border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-sm); }
   .logo-mark svg { color: white; }
-  .header-title { font-size: 14px; font-weight: 500; letter-spacing: 0.02em; color: var(--text); }
+  .header-title { font-size: 15px; font-weight: 500; letter-spacing: 0.02em; color: var(--text); }
   .header-subtitle { font-size: 11px; color: var(--text-muted); font-weight: 300; letter-spacing: 0.04em; }
-  .clock { font-family: var(--mono); font-size: 13px; color: var(--text-muted); letter-spacing: 0.06em; }
+  .clock { font-family: var(--mono); font-size: 14px; color: var(--text-muted); letter-spacing: 0.06em; font-weight: 500; }
+  
   main { max-width: 1100px; margin: 0 auto; padding: 28px 24px; }
-  .search-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px 28px; margin-bottom: 20px; }
-  .search-label { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); font-weight: 400; margin-bottom: 10px; }
-  .search-row { display: flex; gap: 10px; align-items: center; }
+  
+  /* ═════════ 搜尋區塊優化 ═════════ */
+  .search-section { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px 28px; margin-bottom: 24px; box-shadow: var(--shadow-md); transition: transform 0.2s, box-shadow 0.2s; }
+  .search-section:hover { box-shadow: var(--shadow-lg); }
+  .search-label { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); font-weight: 500; margin-bottom: 12px; }
+  .search-row { display: flex; gap: 12px; align-items: center; }
   .search-input-wrap { flex: 1; position: relative; }
-  .search-input { width: 100%; border: 1.5px solid var(--border); background: var(--bg); border-radius: 8px; padding: 10px 14px 10px 40px; font-family: var(--sans); font-size: 14px; color: var(--text); outline: none; transition: border-color 0.2s; }
-  .search-input:focus { border-color: var(--accent); }
+  .search-input { width: 100%; border: 1.5px solid var(--border); background: var(--bg); border-radius: 10px; padding: 12px 16px 12px 42px; font-family: var(--sans); font-size: 15px; color: var(--text); outline: none; transition: all 0.2s; box-shadow: inset 0 1px 3px rgba(0,0,0,0.02); }
+  .search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
   .search-input::placeholder { color: var(--text-light); }
-  .search-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
-  .suggestions { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); z-index: 200; max-height: 280px; overflow-y: auto; display: none; }
-  .suggestions.open { display: block; }
-  .suggestion-item { padding: 9px 14px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; transition: background 0.1s; border-bottom: 1px solid var(--bg); }
+  .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
+  
+  /* 搜尋自動完成選單 */
+  .suggestions { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--header-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-lg); z-index: 200; max-height: 280px; overflow-y: auto; display: none; }
+  .suggestions.open { display: block; animation: fadeInDown 0.2s ease-out; }
+  @keyframes fadeInDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+  .suggestion-item { padding: 10px 16px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; transition: background 0.15s; border-bottom: 1px solid var(--border); }
   .suggestion-item:last-child { border-bottom: none; }
   .suggestion-item:hover { background: var(--surface2); }
-  .suggestion-name { font-size: 13px; color: var(--text); flex: 1; }
-  .suggestion-count { font-family: var(--mono); font-size: 11px; color: var(--text-muted); background: var(--tag-bg); padding: 2px 7px; border-radius: 4px; flex-shrink: 0; }
-  .btn-primary { background: var(--text); color: white; border: none; border-radius: 8px; padding: 10px 20px; font-family: var(--sans); font-size: 13px; cursor: pointer; white-space: nowrap; transition: opacity 0.2s; font-weight: 400; letter-spacing: 0.02em; }
-  .btn-primary:hover { opacity: 0.82; }
-  .btn-clear { background: none; border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 16px; font-family: var(--sans); font-size: 13px; color: var(--text-muted); cursor: pointer; transition: border-color 0.2s; white-space: nowrap; }
-  .btn-clear:hover { border-color: var(--text-muted); }
-  #result-area { display: none; }
+  .suggestion-name { font-size: 14px; color: var(--text); flex: 1; font-weight: 500; }
+  .suggestion-count { font-family: var(--mono); font-size: 11px; color: var(--text-muted); background: var(--tag-bg); padding: 3px 8px; border-radius: 6px; flex-shrink: 0; }
+  
+  /* 按鈕設計 */
+  .btn-primary { background: var(--text); color: var(--surface); border: none; border-radius: 10px; padding: 12px 24px; font-family: var(--sans); font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: transform 0.15s, opacity 0.15s; box-shadow: var(--shadow-sm); }
+  .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-clear { background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px; padding: 12px 20px; font-family: var(--sans); font-size: 14px; color: var(--text-muted); font-weight: 500; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .btn-clear:hover { border-color: var(--text); color: var(--text); background: var(--surface2); }
+
+  /* ═════════ 統計數字列優化 ═════════ */
+  .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+  .stat-cell { background: var(--surface); padding: 16px 20px; text-align: center; border-radius: 16px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); transition: transform 0.2s; }
+  .stat-cell:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .stat-num { font-family: var(--mono); font-size: 24px; font-weight: 400; color: var(--text); line-height: 1; margin-bottom: 2px; }
+  .stat-sub-counts { font-size: 10px; color: var(--text-muted); font-family: var(--mono); margin-bottom: 4px; margin-top: 4px; letter-spacing: 0.02em; }
+  .stat-label { font-size: 11px; color: var(--text-muted); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 500; }
+
+  #result-area { display: none; animation: fadeIn 0.3s ease; }
   #result-area.visible { display: block; }
-  .hospital-header { display: flex; align-items: flex-start; justify-content: space-between; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 22px 28px; margin-bottom: 16px; gap: 16px; }
-  .hospital-name-area h2 { font-size: 18px; font-weight: 500; color: var(--text); line-height: 1.3; margin-bottom: 6px; }
-  .tags { display: flex; gap: 6px; flex-wrap: wrap; }
-  .tag { font-size: 11px; padding: 3px 9px; border-radius: 4px; background: var(--tag-bg); color: var(--text-muted); font-family: var(--mono); letter-spacing: 0.02em; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* ═════════ 醫院標題卡片 ═════════ */
+  .hospital-header { display: flex; align-items: flex-start; justify-content: space-between; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px 32px; margin-bottom: 20px; gap: 16px; box-shadow: var(--shadow-md); }
+  .hospital-name-area h2 { font-size: 22px; font-weight: 500; color: var(--text); line-height: 1.3; margin-bottom: 10px; }
+  .tags { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tag { font-size: 12px; padding: 4px 10px; border-radius: 6px; background: var(--tag-bg); color: var(--text-muted); font-family: var(--mono); font-weight: 500; letter-spacing: 0.02em; }
   .tag.accent { background: var(--accent-light); color: var(--accent); }
   .tag.warn { background: var(--warn-light); color: var(--warn); }
+  
   .mission-count-box { text-align: right; flex-shrink: 0; }
-  .mission-count-num { font-family: var(--mono); font-size: 32px; font-weight: 300; color: var(--text); line-height: 1; margin-bottom: 2px; }
-  .mission-count-label { font-size: 11px; color: var(--text-muted); letter-spacing: 0.06em; }
-  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .mission-count-num { font-family: var(--mono); font-size: 36px; font-weight: 400; color: var(--text); line-height: 1; margin-bottom: 4px; }
+  .mission-count-label { font-size: 12px; color: var(--text-muted); letter-spacing: 0.06em; font-weight: 500; }
+
+  /* ═════════ 資訊卡片 ═════════ */
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
   @media (max-width: 660px) { .info-grid { grid-template-columns: 1fr; } }
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; }
-  .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-  .card-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); font-weight: 400; }
-  .phone-list { display: flex; flex-direction: column; gap: 8px; }
-  .phone-record { display: flex; align-items: flex-start; gap: 12px; padding: 10px 12px; background: var(--bg); border-radius: 7px; transition: background 0.15s; }
-  .phone-record:hover { background: var(--surface2); }
-  .phone-date { font-family: var(--mono); font-size: 11px; color: var(--text-muted); white-space: nowrap; margin-top: 1px; min-width: 72px; }
+  
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 22px 28px; box-shadow: var(--shadow-sm); transition: box-shadow 0.2s; }
+  .card:hover { box-shadow: var(--shadow-md); }
+  .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid var(--surface2); padding-bottom: 12px; }
+  .card-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); font-weight: 500; }
+  
+  /* 歷史電話清單 */
+  .phone-list { display: flex; flex-direction: column; gap: 10px; }
+  .phone-record { display: flex; align-items: flex-start; gap: 14px; padding: 12px 16px; background: var(--bg); border-radius: 10px; transition: background 0.15s; border: 1px solid transparent; }
+  .phone-record:hover { background: var(--surface2); border-color: var(--border); }
+  .phone-date { font-family: var(--mono); font-size: 12px; color: var(--text-muted); font-weight: 500; white-space: nowrap; margin-top: 1px; min-width: 76px; }
   .phone-details { flex: 1; min-width: 0; }
-  .phone-number { font-family: var(--mono); font-size: 13px; color: var(--text); margin-bottom: 2px; word-break: break-all; }
-  .phone-contact { font-size: 12px; color: var(--text-muted); }
-  .phone-unit { font-size: 11px; background: var(--tag-bg); padding: 1px 7px; border-radius: 3px; color: var(--text-muted); font-family: var(--mono); white-space: nowrap; align-self: flex-start; margin-top: 1px; }
-  .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); }
-  .empty-state svg { width: 48px; height: 48px; margin: 0 auto 16px; opacity: 0.25; }
-  .empty-state p { font-size: 13px; font-weight: 300; }
-  .stats-bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
-  .stat-cell { background: var(--surface); padding: 14px 18px; text-align: center; }
-  .stat-num { font-family: var(--mono); font-size: 20px; font-weight: 300; color: var(--text); line-height: 1; margin-bottom: 0px; } /* 這裡的 margin-bottom 改為 0px */
-  .stat-sub-counts { font-size: 9px; color: var(--text-muted); font-family: var(--mono); margin-bottom: 2px; margin-top: 3px; letter-spacing: 0.02em; }
-  .stat-label { font-size: 10px; color: var(--text-muted); letter-spacing: 0.06em; text-transform: uppercase; }
-  .no-result { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 32px 28px; text-align: center; color: var(--text-muted); }
-  .no-result h3 { font-size: 15px; font-weight: 400; margin-bottom: 6px; color: var(--text); }
-  .no-result p { font-size: 13px; }
-  .section-divider { margin: 24px 0 16px; display: flex; align-items: center; gap: 10px; }
-  .section-divider-label { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-light); white-space: nowrap; }
-  .section-divider hr { flex: 1; border: none; border-top: 1px solid var(--border); }
-  mark { background: #fde68a; color: inherit; border-radius: 2px; padding: 0 1px; }
-  .time-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
-  .time-stat-cell { background: var(--surface); padding: 18px 20px; }
-  .time-stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 8px; font-weight: 400; }
-  .time-stat-value { font-family: var(--mono); font-size: 28px; font-weight: 300; color: var(--text); line-height: 1; margin-bottom: 3px; }
-  .time-stat-value span { font-size: 13px; color: var(--text-muted); font-weight: 300; }
-  .time-stat-sub { font-size: 11px; color: var(--text-muted); }
-  .time-stat-cell.highlight { background: var(--warn-light); }
+  .phone-number { font-family: var(--mono); font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 3px; word-break: break-all; }
+  .phone-contact { font-size: 13px; color: var(--text-muted); }
+  .phone-unit { font-size: 11px; background: var(--tag-bg); padding: 2px 8px; border-radius: 4px; color: var(--text-muted); font-family: var(--mono); font-weight: 500; white-space: nowrap; align-self: flex-start; margin-top: 1px; }
+  
+  /* 空白狀態 */
+  .empty-state { text-align: center; padding: 60px 24px; color: var(--text-muted); background: transparent; border: 2px dashed var(--border); box-shadow: none; }
+  .empty-state:hover { box-shadow: none; border-color: var(--text-light); }
+  .empty-state svg { width: 56px; height: 56px; margin: 0 auto 16px; opacity: 0.2; }
+  .empty-state p { font-size: 14px; font-weight: 400; line-height: 1.8; }
+
+  /* 時間統計區塊 */
+  .time-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+  .time-stat-cell { background: var(--surface); padding: 20px 24px; border-radius: 16px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+  .time-stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 10px; font-weight: 500; }
+  .time-stat-value { font-family: var(--mono); font-size: 30px; font-weight: 400; color: var(--text); line-height: 1; margin-bottom: 6px; }
+  .time-stat-value span { font-size: 14px; color: var(--text-muted); font-weight: 500; }
+  .time-stat-sub { font-size: 12px; color: var(--text-muted); }
+  .time-stat-cell.highlight { background: var(--warn-light); border-color: rgba(184, 92, 26, 0.2); }
   .time-stat-cell.highlight .time-stat-value { color: var(--warn); }
-  .time-stat-cell.highlight .time-stat-label { color: var(--warn); opacity: 0.8; }
+  .time-stat-cell.highlight .time-stat-label { color: var(--warn); }
   @media (max-width: 580px) { .time-stats { grid-template-columns: 1fr; } }
-  .live-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  
+  /* 下方網格區 */
+  .live-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   @media (max-width: 700px) { .live-grid { grid-template-columns: 1fr; } }
-  .device-maps-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .device-maps-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   @media (max-width: 700px) { .device-maps-grid { grid-template-columns: 1fr; } }
-  .device-map-card { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--surface); }
-  .device-map-header { padding: 10px 14px 8px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--bg); gap: 8px; }
-  .device-map-name { font-size: 12px; font-weight: 500; color: var(--text); font-family: var(--mono); }
-  .device-map-status { font-size: 10px; padding: 2px 7px; border-radius: 4px; font-family: var(--mono); white-space: nowrap; }
+  
+  .device-map-card { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--surface); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
+  .device-map-header { padding: 12px 16px 10px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--surface2); gap: 8px; }
+  .device-map-name { font-size: 13px; font-weight: 500; color: var(--text); font-family: var(--sans); }
+  .device-map-status { font-size: 11px; padding: 3px 8px; border-radius: 6px; font-family: var(--mono); font-weight: 500; white-space: nowrap; }
   .device-map-status.out { background: var(--accent-light); color: var(--accent); }
   .device-map-status.in  { background: var(--tag-bg); color: var(--text-muted); }
   .device-map-status.stale { background: var(--warn-light); color: var(--warn); }
   .device-map-status.returning { background: var(--warn-light); color: var(--warn); }
-  .device-map-time { font-size: 10px; font-family: var(--mono); color: var(--text-muted); white-space: nowrap; }
-  .device-map-frame { position: relative; height: 200px; background: var(--bg); }
+  .device-map-time { font-size: 11px; font-family: var(--mono); color: var(--text-muted); white-space: nowrap; }
+  .device-map-frame { position: relative; height: 200px; background: var(--surface2); }
   .device-map-frame iframe { width: 100%; height: 100%; border: none; }
-  .device-map-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-size: 13px; color: var(--text-muted); background: var(--bg); text-align: center; padding: 16px; }
-  .device-map-stale-warn { font-size: 11px; color: var(--warn); font-weight: 500; margin-top: 4px; text-align: center; padding: 6px 14px; background: var(--warn-light); border-radius: 4px; }
-  .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-light); flex-shrink: 0; display: inline-block; }
+  .device-map-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; font-size: 13px; color: var(--text-muted); background: var(--bg); text-align: center; padding: 16px; }
+  .device-map-stale-warn { font-size: 11px; color: var(--warn); font-weight: 500; margin-top: 4px; text-align: center; padding: 8px 14px; background: var(--warn-light); border-radius: 6px; }
+  
+  /* 定位閃爍燈 */
+  .pulse-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--text-light); flex-shrink: 0; display: inline-block; }
   .pulse-dot.active { background: var(--accent); animation: pulse 2s infinite; }
   .pulse-dot.warn   { background: var(--warn); }
-  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(74,103,65,0.4); } 50% { box-shadow: 0 0 0 5px rgba(74,103,65,0); } }
-  .weather-row { display: flex; align-items: center; gap: 10px; }
-  .weather-icon { font-size: 24px; line-height: 1; }
-  .weather-main { font-size: 20px; font-family: var(--mono); font-weight: 300; color: var(--text); }
-  .weather-main span { font-size: 12px; color: var(--text-muted); }
-  .weather-desc { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
-  .quake-item { padding: 8px 0; border-bottom: 1px solid var(--bg); font-size: 12px; }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(74,103,65,0.4); } 50% { box-shadow: 0 0 0 6px rgba(74,103,65,0); } }
+  
+  /* 天氣區塊 */
+  .weather-row { display: flex; align-items: center; gap: 14px; padding: 8px 0; }
+  .weather-icon { font-size: 32px; line-height: 1; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
+  .weather-main { font-size: 22px; font-family: var(--sans); font-weight: 500; color: var(--text); margin-bottom: 2px; }
+  .weather-main span { font-size: 14px; font-weight: normal; color: var(--text-muted); }
+  .weather-desc { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+  
+  /* 地震區塊 */
+  .quake-item { padding: 12px 0; border-bottom: 1px solid var(--surface2); font-size: 13px; transition: background 0.15s; }
   .quake-item:last-child { border-bottom: none; padding-bottom: 0; }
-  .quake-mag { font-family: var(--mono); font-size: 14px; font-weight: 400; color: var(--text); }
-  .quake-mag.big { color: var(--warn); }
-  .quake-loc { color: var(--text-muted); margin-top: 1px; }
-  .quake-time { font-family: var(--mono); font-size: 10px; color: var(--text-light); margin-top: 1px; }
-  .quake-none { font-size: 13px; color: var(--accent); }
-  .suggestions::-webkit-scrollbar { width: 5px; }
+  .quake-mag { font-family: var(--mono); font-size: 15px; font-weight: 500; color: var(--text); }
+  .quake-mag.big { color: var(--warn); font-weight: bold; }
+  .quake-loc { color: var(--text-muted); margin-top: 4px; }
+  .quake-time { font-family: var(--mono); font-size: 11px; color: var(--text-light); margin-top: 4px; }
+  .quake-none { font-size: 14px; color: var(--accent); font-weight: 500; }
+  
+  /* 捲軸美化 */
+  .suggestions::-webkit-scrollbar { width: 6px; }
   .suggestions::-webkit-scrollbar-track { background: transparent; }
-  .suggestions::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-  #suhua-panel { display: none; margin-bottom: 20px; animation: suhuaSlideIn 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
+  .suggestions::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  
+  /* ═════════ 蘇花路況面板 ═════════ */
+  #suhua-panel { display: none; margin-bottom: 24px; animation: suhuaSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
   #suhua-panel.visible { display: block; }
-  @keyframes suhuaSlideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-  .suhua-container { border: 1.5px solid var(--suhua-border); border-radius: 12px; overflow: hidden; background: var(--suhua-bg); }
-  .suhua-header { background: var(--suhua-header-bg); border-bottom: 1px solid var(--suhua-border); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; user-select: none; }
-  .suhua-header:hover { background: #ffefd6; }
-  .suhua-header-left { display: flex; align-items: center; gap: 10px; }
-  .suhua-icon { font-size: 18px; line-height: 1; }
-  .suhua-title { font-size: 13px; font-weight: 500; color: var(--suhua-header); letter-spacing: 0.02em; }
-  .suhua-subtitle { font-size: 11px; color: #a0653a; margin-top: 1px; }
-  .suhua-toggle-btn { background: none; border: 1px solid var(--suhua-border); border-radius: 6px; padding: 4px 10px; font-size: 11px; font-family: var(--sans); color: var(--suhua-header); cursor: pointer; white-space: nowrap; transition: background 0.15s; display: flex; align-items: center; gap: 5px; }
-  .suhua-toggle-btn:hover { background: rgba(124,74,16,0.08); }
-  .suhua-chevron { transition: transform 0.25s; font-style: normal; }
+  @keyframes suhuaSlideIn { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
+  
+  .suhua-container { border: 1px solid var(--suhua-border); border-radius: 16px; overflow: hidden; background: var(--suhua-bg); box-shadow: var(--shadow-md); }
+  .suhua-header { background: var(--suhua-header-bg); border-bottom: 1px solid var(--suhua-border); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; user-select: none; transition: background 0.2s; }
+  .suhua-header:hover { background: var(--suhua-header-bg); filter: brightness(0.95); }
+  .suhua-header-left { display: flex; align-items: center; gap: 12px; }
+  .suhua-icon { font-size: 22px; line-height: 1; }
+  .suhua-title { font-size: 15px; font-weight: 500; color: var(--suhua-header); letter-spacing: 0.02em; }
+  .suhua-subtitle { font-size: 12px; color: #a0653a; margin-top: 2px; }
+  .suhua-toggle-btn { background: var(--surface); border: 1px solid var(--suhua-border); border-radius: 8px; padding: 6px 12px; font-size: 12px; font-family: var(--sans); color: var(--suhua-header); cursor: pointer; white-space: nowrap; transition: all 0.2s; display: flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); }
+  .suhua-toggle-btn:hover { background: #fdf5ec; box-shadow: var(--shadow-md); }
+  .suhua-chevron { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-style: normal; font-size: 10px; }
   .suhua-chevron.up { transform: rotate(180deg); }
-  .suhua-body { padding: 16px 20px; display: none; }
+  
+  .suhua-body { padding: 20px 24px; display: none; background: var(--surface); }
   .suhua-body.expanded { display: block; }
-  .suhua-loading { display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: 13px; padding: 8px 0; }
-  .suhua-spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--warn); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .suhua-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .suhua-loading { display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--text-muted); font-size: 14px; padding: 20px 0; }
+  .suhua-spinner { width: 20px; height: 20px; border: 2.5px solid var(--surface2); border-top-color: var(--warn); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+  
+  .suhua-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
   @media (max-width: 720px) { .suhua-grid { grid-template-columns: 1fr; } }
   @media (max-width: 900px) and (min-width: 721px) { .suhua-grid { grid-template-columns: 1fr 1fr; } }
-  .suhua-card { background: var(--surface); border: 1px solid var(--border); border-radius: 9px; overflow: hidden; }
-  .suhua-card-header { padding: 9px 14px; background: var(--surface2); border-bottom: 1px solid var(--border); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); font-weight: 400; display: flex; align-items: center; gap: 6px; }
-  .suhua-card-body { padding: 12px 14px; }
-  .road-row { padding: 7px 0; border-bottom: 1px solid var(--bg); font-size: 12px; }
+  
+  .suhua-card { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .suhua-card-header { padding: 10px 16px; background: var(--surface2); border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); font-weight: 500; display: flex; align-items: center; gap: 6px; }
+  .suhua-card-body { padding: 14px 16px; }
+  
+  /* 蘇花路況內部列表 */
+  .road-row { padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
   .road-row:last-child { border-bottom: none; padding-bottom: 0; }
-  .road-row-top { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-bottom: 3px; }
-  .road-section-name { font-size: 11px; color: var(--text-muted); font-family: var(--mono); }
-  .road-badge { font-size: 10px; padding: 1px 7px; border-radius: 3px; font-family: var(--mono); font-weight: 500; white-space: nowrap; }
+  .road-row-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+  .road-section-name { font-size: 12px; color: var(--text-muted); font-family: var(--mono); font-weight: 500; }
+  .road-badge { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-family: var(--sans); font-weight: 500; white-space: nowrap; }
   .road-badge.green  { background: var(--road-green-bg);  color: var(--road-green); }
   .road-badge.yellow { background: var(--road-yellow-bg); color: var(--road-yellow); }
   .road-badge.red    { background: var(--road-red-bg);    color: var(--road-red); }
-  .road-row-desc { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
-  .road-type-tag { display: inline-block; font-size: 9px; padding: 0px 5px; border-radius: 3px; background: var(--info-light); color: var(--info); font-family: var(--mono); margin-left: 4px; vertical-align: middle; }
+  .road-row-desc { font-size: 12px; color: var(--text); line-height: 1.6; }
+  .road-type-tag { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 4px; background: var(--info-light); color: var(--info); font-family: var(--mono); margin-left: 4px; vertical-align: middle; }
   .road-type-tag.old { background: var(--tag-bg); color: var(--text-muted); }
-  .rain-row { display: flex; align-items: baseline; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--bg); font-size: 12px; gap: 8px; }
+  
+  .rain-row { display: flex; align-items: baseline; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; gap: 8px; }
   .rain-row:last-child { border-bottom: none; padding-bottom: 0; }
-  .rain-location { color: var(--text-muted); flex-shrink: 0; font-size: 11px; }
-  .rain-right { text-align: right; }
-  .rain-value { font-family: var(--mono); font-size: 13px; color: var(--text); }
+  .rain-location { color: var(--text-muted); flex-shrink: 0; font-size: 12px; font-weight: 500; }
+  .rain-value { font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--text); }
   .rain-value.green  { color: var(--road-green); }
   .rain-value.blue   { color: var(--info); }
   .rain-value.yellow { color: var(--road-yellow); }
   .rain-value.orange { color: var(--warn); }
   .rain-value.red    { color: var(--road-red); }
-  .rain-forecast { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
-  .rain-forecast.warn { color: #c2410c; font-weight: 500; }
-  .eq-row { padding: 7px 0; border-bottom: 1px solid var(--bg); font-size: 12px; }
+  .rain-forecast { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .rain-forecast.warn { color: var(--warn); font-weight: 500; }
+  
+  .eq-row { padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
   .eq-row:last-child { border-bottom: none; padding-bottom: 0; }
-  .eq-row-top { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; flex-wrap: wrap; }
-  .eq-mag { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--text); }
+  .eq-row-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+  .eq-mag { font-family: var(--mono); font-size: 14px; font-weight: bold; color: var(--text); }
   .eq-mag.big { color: var(--road-red); }
-  .eq-loc { font-size: 11px; color: var(--text-muted); margin-bottom: 3px; }
-  .eq-badge { font-size: 10px; padding: 1px 7px; border-radius: 10px; font-family: var(--mono); font-weight: 500; }
+  .eq-loc { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+  .eq-badge { font-size: 11px; padding: 2px 8px; border-radius: 12px; font-family: var(--mono); font-weight: 500; }
   .eq-badge.high { background: var(--eq-high-bg); color: var(--eq-high-fg); }
   .eq-badge.mid  { background: var(--eq-mid-bg);  color: var(--eq-mid-fg); }
   .eq-badge.low  { background: var(--eq-low-bg);  color: var(--eq-low-fg); }
-  .eq-time-str { font-family: var(--mono); font-size: 10px; color: var(--text-light); margin-top: 2px; }
-  .suhua-footer { padding: 10px 20px; border-top: 1px solid var(--suhua-border); display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
-  .suhua-update-time { font-family: var(--mono); font-size: 10px; color: var(--text-muted); }
-  .suhua-refresh-btn { background: none; border: 1px solid var(--suhua-border); border-radius: 5px; padding: 3px 10px; font-size: 10px; font-family: var(--sans); color: #a0653a; cursor: pointer; transition: background 0.15s; }
-  .suhua-refresh-btn:hover { background: rgba(124,74,16,0.06); }
-  .suhua-source-link { font-size: 10px; color: var(--text-light); text-decoration: none; }
-  .suhua-source-link:hover { color: var(--text-muted); }
-  .typhoon-banner { display: flex; align-items: flex-start; gap: 10px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; font-size: 12px; }
-  .typhoon-banner-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
-  .typhoon-banner-name { font-size: 13px; font-weight: 500; color: #c2410c; margin-bottom: 2px; }
-  .typhoon-banner-detail { color: var(--text-muted); line-height: 1.5; }
-  .all-clear { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--road-green); padding: 6px 0; }
-  .suhua-error { font-size: 12px; color: var(--text-muted); padding: 8px 0; display: flex; align-items: center; gap: 6px; }
+  .eq-time-str { font-family: var(--mono); font-size: 11px; color: var(--text-light); margin-top: 2px; }
+  
+  .suhua-footer { padding: 12px 24px; border-top: 1px solid var(--border); background: var(--surface2); display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .suhua-update-time { font-family: var(--mono); font-size: 11px; color: var(--text-muted); }
+  .suhua-refresh-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 11px; font-family: var(--sans); color: var(--text); cursor: pointer; transition: all 0.2s; box-shadow: var(--shadow-sm); }
+  .suhua-refresh-btn:hover { background: var(--bg); box-shadow: var(--shadow-md); }
+  .suhua-source-link { font-size: 11px; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+  .suhua-source-link:hover { color: var(--text); }
+  
+  .typhoon-banner { display: flex; align-items: flex-start; gap: 12px; background: var(--warn-light); border: 1px solid rgba(255, 183, 77, 0.4); border-radius: 10px; padding: 14px 18px; margin-bottom: 16px; font-size: 13px; }
+  .typhoon-banner-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
+  .typhoon-banner-name { font-size: 14px; font-weight: bold; color: var(--warn); margin-bottom: 4px; }
+  .typhoon-banner-detail { color: var(--text); line-height: 1.6; }
+  
+  /* 雜項美化 */
+  .all-clear { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--road-green); padding: 10px 0; font-weight: 500; }
+  .suhua-error { font-size: 13px; color: var(--warn); padding: 12px 0; display: flex; align-items: center; gap: 8px; font-weight: 500; }
+  .section-divider { margin: 32px 0 20px; display: flex; align-items: center; gap: 16px; }
+  .section-divider-label { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-light); white-space: nowrap; font-weight: 500; }
+  .section-divider hr { flex: 1; border: none; border-top: 1px dashed var(--border); }
+  mark { background: rgba(253, 230, 138, 0.8); color: #000; border-radius: 3px; padding: 0 2px; }
+  
   @media (max-width: 480px) { .stats-bar { grid-template-columns: repeat(2,1fr); } }
+  
   /* 載入中遮罩 */
-  #db-loading-banner { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 8px; }
-  .mini-spinner { width: 12px; height: 12px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+  #db-loading-banner { background: var(--info-light); border: 1px solid rgba(100, 181, 246, 0.3); border-radius: 10px; padding: 12px 20px; margin-bottom: 24px; font-size: 13px; color: var(--info); display: flex; align-items: center; gap: 12px; font-weight: 500; }
+  .mini-spinner { width: 16px; height: 16px; border: 2.5px solid rgba(100, 181, 246, 0.3); border-top-color: var(--info); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -243,7 +368,7 @@
     </div>
     <div>
       <div class="header-title">台大兒童醫院 轉運外接系統</div>
-      <div class="header-subtitle">NTUCH Transport Team · Dashboard v1.2</div>
+      <div class="header-subtitle">NTUCH Transport Team · Dashboard v1.3</div>
     </div>
   </div>
   <div class="clock" id="clock">--:--:--</div>
@@ -251,9 +376,8 @@
 
 <main>
 
-  <!-- Stats bar（數字由 API 動態填入）-->
   <div class="stats-bar">
-        <div class="stat-cell">
+    <div class="stat-cell">
       <div class="stat-num" id="stat-missions">—</div>
       <div class="stat-sub-counts" id="stat-missions-breakdown">外接: — | 轉出: —</div>
       <div class="stat-label">歷史任務</div>
@@ -270,24 +394,18 @@
       <div class="stat-num" id="stat-years">—</div>
       <div class="stat-label">年資料庫</div>
     </div>
-    <div class="stat-cell">
-      <div class="stat-num" id="stat-last-date" style="font-size:15px;">—</div>
-      <div class="stat-label">資料更新日期</div>
-    </div>
   </div>
 
-  <!-- 載入提示 -->
   <div id="db-loading-banner">
     <div class="mini-spinner"></div>
     <span>資料庫載入中，請稍候…</span>
   </div>
 
-  <!-- Search -->
   <div class="search-section">
     <div class="search-label">輸入出勤院所名稱</div>
     <div class="search-row">
       <div class="search-input-wrap">
-        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
         </svg>
         <input type="text" class="search-input" id="search-input"
@@ -299,7 +417,6 @@
     </div>
   </div>
 
-  <!-- 蘇花路況面板 -->
   <div id="suhua-panel">
     <div class="suhua-container">
       <div class="suhua-header" onclick="toggleSuhuaBody()">
@@ -310,16 +427,16 @@
             <div class="suhua-subtitle" id="suhua-subtitle">查詢東部院所時自動啟用</div>
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;">
+        <div style="display:flex;align-items:center;gap:12px;">
           <a href="https://su-hua-dashboard.vercel.app/" target="_blank" rel="noopener"
              onclick="event.stopPropagation()"
-             style="font-size:11px;font-family:var(--sans);color:var(--suhua-header);background:rgba(124,74,16,0.08);border:1px solid var(--suhua-border);border-radius:6px;padding:4px 10px;text-decoration:none;white-space:nowrap;transition:background 0.15s;"
-             onmouseover="this.style.background='rgba(124,74,16,0.16)'"
-             onmouseout="this.style.background='rgba(124,74,16,0.08)'"
+             style="font-size:12px;font-family:var(--sans);color:var(--suhua-header);background:var(--surface);border:1px solid var(--suhua-border);border-radius:8px;padding:6px 12px;text-decoration:none;white-space:nowrap;transition:all 0.2s;box-shadow:var(--shadow-sm);"
+             onmouseover="this.style.boxShadow='var(--shadow-md)'"
+             onmouseout="this.style.boxShadow='var(--shadow-sm)'"
           >完整資訊 ↗</a>
           <button class="suhua-toggle-btn" id="suhua-toggle-btn">
             <span>收起</span>
-            <i class="suhua-chevron up" id="suhua-chevron">▲</i>
+            <i class="suhua-chevron up" id="suhua-chevron">▼</i>
           </button>
         </div>
       </div>
@@ -344,20 +461,19 @@
     </div>
   </div>
 
-  <!-- Result area -->
   <div id="result-area">
     <div id="result-content"></div>
     <div class="section-divider">
       <div class="section-divider-label">即時資訊</div>
       <hr>
     </div>
-    <!-- Location tracking -->
-    <div class="card" style="margin-bottom:16px;">
+    
+    <div class="card" style="margin-bottom:20px;">
       <div class="card-header">
         <div class="card-title">出勤手機定位</div>
-        <div style="display:flex;gap:6px;align-items:center;">
+        <div style="display:flex;gap:8px;align-items:center;">
           <div class="pulse-dot" id="location-pulse"></div>
-          <span style="font-size:11px;color:var(--text-muted);" id="location-update-time">讀取中…</span>
+          <span style="font-size:12px;color:var(--text-muted);font-family:var(--mono);" id="location-update-time">讀取中…</span>
         </div>
       </div>
       <div class="device-maps-grid" id="device-maps-grid">
@@ -371,36 +487,35 @@
         </div>
       </div>
     </div>
-    <!-- Map + weather + quake -->
-    <div class="live-grid" style="margin-bottom:16px;">
+    
+    <div class="live-grid" style="margin-bottom:20px;">
       <div class="card" id="map-card">
         <div class="card-header">
           <div class="card-title">導航地圖</div>
-          <span id="travel-time-badge" style="font-size:11px;font-family:var(--mono);background:var(--accent-light);color:var(--accent);padding:2px 8px;border-radius:4px;display:none;"></span>
+          <span id="travel-time-badge" style="font-size:12px;font-family:var(--mono);font-weight:500;background:var(--accent-light);color:var(--accent);padding:3px 10px;border-radius:6px;display:none;"></span>
         </div>
-        <div id="map-container" style="height:220px;background:var(--bg);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px;">
+        <div id="map-container" style="height:240px;background:var(--surface2);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:14px;">
           查詢院所後顯示地圖
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:12px;">
+      <div style="display:flex;flex-direction:column;gap:16px;">
         <div class="card">
           <div class="card-header"><div class="card-title">目的地天氣</div></div>
-          <div id="weather-content"><span style="color:var(--text-muted);font-size:13px;">查詢院所後顯示天氣</span></div>
+          <div id="weather-content"><span style="color:var(--text-muted);font-size:14px;">查詢院所後顯示天氣</span></div>
         </div>
         <div class="card">
           <div class="card-header"><div class="card-title">近48小時地震</div></div>
-          <div id="quake-content"><span style="color:var(--text-muted);font-size:13px;">載入中…</span></div>
+          <div id="quake-content"><span style="color:var(--text-muted);font-size:14px;">載入中…</span></div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Empty state -->
   <div id="empty-state" class="card empty-state">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
       <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
     </svg>
-    <p>輸入院所名稱開始查詢<br>可查詢歷史來電電話、聯絡人及出勤紀錄</p>
+    <p>請輸入院所名稱開始查詢<br><span style="font-size:13px;opacity:0.7;">可查詢歷史來電電話、聯絡人、出勤紀錄與即時導航</span></p>
   </div>
 
 </main>
@@ -483,9 +598,10 @@ function doSearch() {
   document.getElementById('empty-state').style.display = 'none';
   document.getElementById('result-area').classList.add('visible');
   document.getElementById('result-content').innerHTML = `
-    <div class="no-result">
-      <h3>找不到「${q}」的出勤紀錄</h3>
-      <p>這可能是從未出勤過的院所，可在未來出勤後加入資料庫。</p>
+    <div class="card" style="margin-bottom:20px;text-align:center;padding:48px 24px;border:1px solid var(--warn-light);background:var(--surface);">
+      <div style="font-size:32px;margin-bottom:12px;">🔍</div>
+      <h3 style="font-size:16px;font-weight:500;color:var(--text);margin-bottom:8px;">找不到「${q}」的出勤紀錄</h3>
+      <p style="font-size:14px;color:var(--text-muted);">這可能是從未出勤過的院所，可在未來出勤後加入資料庫。</p>
     </div>`;
   hideSuhuaPanel();
 }
@@ -495,13 +611,12 @@ function clearSearch() {
   selectedName = null;
   hideSuggestions();
   document.getElementById('result-area').classList.remove('visible');
-  document.getElementById('empty-state').style.display = '';
+  document.getElementById('empty-state').style.display = 'block';
   document.getElementById('result-content').innerHTML = '';
   hideSuhuaPanel();
 }
 
 function showResult(name) {
-  // ── 若無歷史紀錄，顯示首次出勤提示，但仍跑地圖/天氣 ──
   if (!DB[name]) {
     document.getElementById('empty-state').style.display = 'none';
     document.getElementById('result-area').classList.add('visible');
@@ -518,10 +633,10 @@ function showResult(name) {
           <div class="mission-count-label">歷史出勤次數</div>
         </div>
       </div>
-      <div class="card" style="margin-bottom:16px;text-align:center;padding:28px 24px;">
-        <div style="font-size:22px;margin-bottom:10px;">🚑</div>
-        <div style="font-size:15px;font-weight:500;color:var(--text);margin-bottom:6px;">此為第一次出勤的院所！</div>
-        <div style="font-size:13px;color:var(--text-muted);">尚無歷史聯絡電話及出勤紀錄，地圖與天氣資訊仍可正常使用。</div>
+      <div class="card" style="margin-bottom:20px;text-align:center;padding:36px 24px;">
+        <div style="font-size:28px;margin-bottom:12px;">🚑</div>
+        <div style="font-size:16px;font-weight:500;color:var(--text);margin-bottom:8px;">此為第一次出勤的院所！</div>
+        <div style="font-size:14px;color:var(--text-muted);">尚無歷史聯絡電話及出勤紀錄，地圖與天氣資訊仍可正常使用。</div>
       </div>`;
     hideSuhuaPanel();
     return;
@@ -564,7 +679,7 @@ function showResult(name) {
       </div>
       <div class="time-stat-cell${maxStayDisplay ? ' highlight' : ''}">
         <div class="time-stat-label">最長停留紀錄</div>
-        <div class="time-stat-value">${maxStayDisplay ? maxStayDisplay + '<span> 分鐘</span>' : '<span style="font-size:14px">—</span>'}</div>
+        <div class="time-stat-value">${maxStayDisplay ? maxStayDisplay + '<span> 分鐘</span>' : '<span style="font-size:16px;color:var(--text-light)">—</span>'}</div>
         <div class="time-stat-sub">${maxStayDateDisplay || '資料不足'}</div>
       </div>
     </div>`;
@@ -625,10 +740,10 @@ function toggleSuhuaBody(forceOpen) {
   const chevron = document.getElementById('suhua-chevron');
   const btn = document.getElementById('suhua-toggle-btn');
   if (forceOpen === true || !suhuaBodyExpanded) {
-    body.classList.add('expanded'); chevron.classList.add('up');
+    body.classList.add('expanded'); chevron.classList.remove('up');
     btn.querySelector('span').textContent = '收起'; suhuaBodyExpanded = true;
   } else {
-    body.classList.remove('expanded'); chevron.classList.remove('up');
+    body.classList.remove('expanded'); chevron.classList.add('up');
     btn.querySelector('span').textContent = '展開'; suhuaBodyExpanded = false;
   }
 }
@@ -650,7 +765,7 @@ async function loadSuhuaData() {
     footer.style.display = 'flex';
   } catch(e) {
     console.error('[蘇花]', e);
-    loading.style.display = 'none'; error.style.display = 'block';
+    loading.style.display = 'none'; error.style.display = 'flex';
     footer.style.display  = 'flex';
     document.getElementById('suhua-update-time').textContent = '資料讀取失敗';
   }
@@ -697,15 +812,15 @@ function renderRoadCard(roadInfo) {
 }
 
 function renderRainCard(rainInfo) {
-  if (!rainInfo.length) return `<div class="suhua-card"><div class="suhua-card-header">🌧 雨量資訊</div><div class="suhua-card-body"><span style="font-size:12px;color:var(--text-muted);">資料讀取失敗</span></div></div>`;
+  if (!rainInfo.length) return `<div class="suhua-card"><div class="suhua-card-header">🌧 雨量資訊</div><div class="suhua-card-body"><span style="font-size:13px;color:var(--text-muted);">資料讀取失敗</span></div></div>`;
   const rainClassMap = {'rain-green':'green','rain-blue':'blue','rain-yellow':'yellow','rain-orange':'orange','rain-red':'red','rain-none':''};
   const rows = rainInfo.map(item => {
     const isNoData = item.class==='rain-nodata'||item.class==='rain-error'||item.mm==='N/A';
     const isNoRain = item.class==='rain-none'||(!isNoData&&(item.mm===0||parseFloat(item.mm)===0));
     const mmText   = isNoData ? '—' : isNoRain ? '0 mm' : `${item.mm} mm`;
     const cls      = rainClassMap[item.class] || '';
-    const noRainTag = isNoRain ? `<span style="font-size:10px;color:var(--road-green);background:var(--road-green-bg);padding:1px 6px;border-radius:3px;font-family:var(--mono);margin-left:5px;">無降雨</span>` : '';
-    const noDataTag = isNoData ? `<span style="font-size:10px;color:var(--text-muted);background:var(--tag-bg);padding:1px 6px;border-radius:3px;font-family:var(--mono);margin-left:5px;">無資料</span>` : '';
+    const noRainTag = isNoRain ? `<span style="font-size:10px;color:var(--road-green);background:var(--road-green-bg);padding:2px 6px;border-radius:4px;font-family:var(--mono);margin-left:6px;">無降雨</span>` : '';
+    const noDataTag = isNoData ? `<span style="font-size:10px;color:var(--text-muted);background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:var(--mono);margin-left:6px;">無資料</span>` : '';
     let forecastHtml = '';
     if (item.forecast && item.forecast !== 'N/A') {
       const isWarn = item.forecast.includes('%') && parseInt(item.forecast) > 50;
@@ -721,18 +836,18 @@ function renderEqCard(eqInfo) {
   const badgeLvl = (n) => { const v=parseInt(n); if(!v) return ''; const cls=v>=5?'high':v>=3?'mid':'low'; return `<span class="eq-badge ${cls}">${v}級</span>`; };
   const rows = eqInfo.slice(0,4).map(item => {
     const isBig = parseFloat(item.magnitude) >= 5;
-    return `<div class="eq-row"><div class="eq-row-top"><span class="eq-mag${isBig?' big':''}">M${item.magnitude}</span>${badgeLvl(item.hualien_level)?`<span style="font-size:10px;color:var(--text-muted);">花蓮</span>${badgeLvl(item.hualien_level)}`:''} ${badgeLvl(item.yilan_level)?`<span style="font-size:10px;color:var(--text-muted);">宜蘭</span>${badgeLvl(item.yilan_level)}`:''} ${badgeLvl(item.taitung_level)?`<span style="font-size:10px;color:var(--text-muted);">台東</span>${badgeLvl(item.taitung_level)}`:''}</div><div class="eq-loc">${item.location}</div><div class="eq-time-str">${item.time}</div></div>`;
+    return `<div class="eq-row"><div class="eq-row-top"><span class="eq-mag${isBig?' big':''}">M${item.magnitude}</span>${badgeLvl(item.hualien_level)?`<span style="font-size:11px;color:var(--text-muted);">花蓮</span>${badgeLvl(item.hualien_level)}`:''} ${badgeLvl(item.yilan_level)?`<span style="font-size:11px;color:var(--text-muted);">宜蘭</span>${badgeLvl(item.yilan_level)}`:''} ${badgeLvl(item.taitung_level)?`<span style="font-size:11px;color:var(--text-muted);">台東</span>${badgeLvl(item.taitung_level)}`:''}</div><div class="eq-loc">${item.location}</div><div class="eq-time-str">${item.time}</div></div>`;
   }).join('');
   return `<div class="suhua-card"><div class="suhua-card-header">🌍 近72小時地震</div><div class="suhua-card-body">${rows}</div></div>`;
 }
 
-// ══ 地圖/定位/天氣（完整保留）══
+// ══ 地圖/定位/天氣 ══
 const MAPS_API_KEY = 'AIzaSyCLjGdhAYU2rmxDCpnhyq4r0L_sr_pvJoI';
 const CWA_API_KEY  = 'CWA-B3D5458A-4530-4045-A702-27A786C1E934';
 const SHEETS_ID    = '1y5oMPbBTpqIYuDQqlZbz8hkUS4mvrVwFeAEAc64KXgo';
 const NTUCH_LAT    = 25.0426;
 const NTUCH_LNG    = 121.5184;
-const NTUCH_RADIUS_M = 600;  // 放大緩衝，防止 GPS 飄移誤判院內裝置為出勤中
+const NTUCH_RADIUS_M = 200;
 const DEST_RADIUS_M  = 400;
 
 const DEVICES = [
@@ -756,13 +871,13 @@ window.onMapsReady=function(){if(currentDestLat)renderMap();};
 function renderMap(){
   if(!window.google){loadMapsAPI();return;}
   const container=document.getElementById('map-container');
-  container.style.display='block';container.style.height='380px';
+  container.style.display='block';container.style.height='260px'; // 稍微加高地圖
   const map=new google.maps.Map(container,{zoom:12,center:{lat:(NTUCH_LAT+currentDestLat)/2,lng:(NTUCH_LNG+currentDestLng)/2},mapTypeControl:false,streetViewControl:false,styles:[{featureType:'poi',elementType:'labels',stylers:[{visibility:'off'}]}]});
   new google.maps.Marker({position:{lat:NTUCH_LAT,lng:NTUCH_LNG},map,title:'台大兒童醫院',icon:{path:google.maps.SymbolPath.CIRCLE,scale:8,fillColor:'#2c2825',fillOpacity:1,strokeWeight:2,strokeColor:'#fff'}});
   new google.maps.Marker({position:{lat:currentDestLat,lng:currentDestLng},map,title:currentDestName,icon:{path:google.maps.SymbolPath.CIRCLE,scale:8,fillColor:'#4a6741',fillOpacity:1,strokeWeight:2,strokeColor:'#fff'}});
   const ds=new google.maps.DirectionsService();
-  const dr=new google.maps.DirectionsRenderer({map,suppressMarkers:true,polylineOptions:{strokeColor:'#4a6741',strokeWeight:4,strokeOpacity:0.7}});
-  ds.route({origin:{lat:NTUCH_LAT,lng:NTUCH_LNG},destination:{lat:currentDestLat,lng:currentDestLng},travelMode:'DRIVING'},(res,status)=>{if(status==='OK')dr.setDirections(res);else new google.maps.Polyline({path:[{lat:NTUCH_LAT,lng:NTUCH_LNG},{lat:currentDestLat,lng:currentDestLng}],map,strokeColor:'#4a6741',strokeOpacity:0.4,strokeWeight:2});});
+  const dr=new google.maps.DirectionsRenderer({map,suppressMarkers:true,polylineOptions:{strokeColor:'#4a6741',strokeWeight:5,strokeOpacity:0.8}});
+  ds.route({origin:{lat:NTUCH_LAT,lng:NTUCH_LNG},destination:{lat:currentDestLat,lng:currentDestLng},travelMode:'DRIVING'},(res,status)=>{if(status==='OK')dr.setDirections(res);else new google.maps.Polyline({path:[{lat:NTUCH_LAT,lng:NTUCH_LNG},{lat:currentDestLat,lng:currentDestLng}],map,strokeColor:'#4a6741',strokeOpacity:0.5,strokeWeight:3});});
   mapInstance=map;fetchTravelTime();
 }
 
@@ -770,12 +885,12 @@ async function fetchTravelTime(){
   if(!currentDestLat||!window.google)return;
   const badge=document.getElementById('travel-time-badge');
   badge.style.display='inline-block';badge.textContent='計算車程中…';
-  badge.style.backgroundColor='var(--tag-bg)';badge.style.color='var(--text-muted)';
+  badge.style.backgroundColor='var(--surface2)';badge.style.color='var(--text-muted)';
   const service=new google.maps.DistanceMatrixService();
   service.getDistanceMatrix({origins:[{lat:NTUCH_LAT,lng:NTUCH_LNG}],destinations:[{lat:currentDestLat,lng:currentDestLng}],travelMode:'DRIVING',language:'zh-TW'},(response,status)=>{
     if(status==='OK'&&response.rows[0].elements[0].status==='OK'){
       badge.textContent=`預計抵達目的地需要 ${response.rows[0].elements[0].duration.text}`;
-      badge.style.backgroundColor='var(--warn-light)';badge.style.color='var(--warn)';badge.style.fontWeight='500';
+      badge.style.backgroundColor='var(--warn-light)';badge.style.color='var(--warn)';
     }else{badge.textContent='無法取得車程';}
   });
 }
@@ -813,8 +928,8 @@ async function fetchWeather(county){
     const wx=getVal('Wx'),pop=getVal('PoP'),minT=getVal('MinT'),maxT=getVal('MaxT');
     const tempText=(minT&&maxT)?`${minT}°C - ${maxT}°C`:`${minT||maxT||''}°C`;
     const rainText=pop?`降雨機率 ${pop}%`:'';
-    el.innerHTML=`<div class="weather-row"><div class="weather-icon">${weatherIcon(wx)}</div><div><div class="weather-main">${county} <span style="font-size:14px;font-weight:normal;color:var(--text);">${wx}</span></div><div class="weather-desc">${tempText}${tempText&&rainText&&tempText!=='°C'?'　|　':''}${rainText}</div></div></div>`;
-  }catch(e){el.innerHTML=`<span style="color:var(--text-muted);font-size:12px;">天氣資料無法取得</span>`;}
+    el.innerHTML=`<div class="weather-row"><div class="weather-icon">${weatherIcon(wx)}</div><div><div class="weather-main">${county} <span>${wx}</span></div><div class="weather-desc">${tempText}${tempText&&rainText&&tempText!=='°C'?'　|　':''}${rainText}</div></div></div>`;
+  }catch(e){el.innerHTML=`<span style="color:var(--text-muted);font-size:14px;">天氣資料無法取得</span>`;}
 }
 
 async function fetchEarthquakes(){
@@ -823,10 +938,10 @@ async function fetchEarthquakes(){
     const res=await fetch(`https://opendata.cwa.gov.tw/api/v1/rest/datastore/E-A0015-001?Authorization=${CWA_API_KEY}&limit=5`);
     const data=await res.json();
     const quakes=data?.records?.Earthquake;
-    if(!quakes||!quakes.length){el.innerHTML='<span class="quake-none">近期無顯著地震</span>';return;}
+    if(!quakes||!quakes.length){el.innerHTML='<div class="quake-item"><span class="quake-none">近期無顯著地震</span></div>';return;}
     const now=Date.now(),h48=48*3600*1000;
     const recent=quakes.filter(q=>(now-new Date(q.EarthquakeInfo?.OriginTime||0).getTime())<h48);
-    if(!recent.length){el.innerHTML='<span class="quake-none">✓ 近48小時無顯著地震</span>';return;}
+    if(!recent.length){el.innerHTML='<div class="quake-item"><span class="quake-none">✓ 近 48 小時無顯著地震</span></div>';return;}
     el.innerHTML=recent.map(q=>{
       const info=q.EarthquakeInfo||{};
       const mag=parseFloat(info.EarthquakeMagnitude?.MagnitudeValue||0);
@@ -835,7 +950,7 @@ async function fetchEarthquakes(){
       const isBig=mag>=4;
       return `<div class="quake-item"><span class="quake-mag${isBig?' big':''}">${isBig?'⚠ ':''}規模 ${mag.toFixed(1)}</span><div class="quake-loc">${loc}</div><div class="quake-time">${time}</div></div>`;
     }).join('');
-  }catch(e){el.innerHTML='<span style="color:var(--text-muted);font-size:12px;">地震資料無法取得</span>';}
+  }catch(e){el.innerHTML='<span style="color:var(--text-muted);font-size:14px;">地震資料無法取得</span>';}
 }
 
 async function geocodeHospital(name,county){
@@ -881,7 +996,7 @@ async function fetchSheetLocation(sheetName){
 
 function buildDeviceStaticMapURL(r,phase){
   const base='https://maps.googleapis.com/maps/api/staticmap';
-  const size='640x200',scale='2',green='0x4a6741',dark='0x2c2825',warn='0xb85c1a';
+  const size='640x240',scale='2',green='0x4a6741',dark='0x2c2825',warn='0xb85c1a';
   if(phase==='outbound'&&r&&currentDestLat&&currentDestLng)
     return `${base}?size=${size}&scale=${scale}&markers=color:${green}%7Csize:mid%7C${r.lat},${r.lng}&markers=color:${warn}%7Csize:mid%7C${currentDestLat},${currentDestLng}&key=${MAPS_API_KEY}`;
   if(phase==='returning'&&r)
@@ -928,8 +1043,7 @@ async function updateLocationDisplay(){
     const dwell=deviceDwellState[i];
     if(!r){statusEl.className='device-map-status stale';statusEl.textContent='無資料';timeEl2.textContent='—';etaEl.innerHTML='';staleEl.innerHTML='';if(!frameEl.querySelector('img'))frameEl.innerHTML='<div class="device-map-overlay">無法取得定位資料</div>';return;}
     const distNTUCH=haversine(r.lat,r.lng,NTUCH_LAT,NTUCH_LNG);
-    const gpsBuffer=Math.min(r.acc||0,150);  // GPS 精準度緩衝，最多 150m
-    const isOutside=distNTUCH>(NTUCH_RADIUS_M+gpsBuffer);const dataAge=now-new Date(r.time).getTime();const isStale=dataAge>STALE_MS;
+    const isOutside=distNTUCH>NTUCH_RADIUS_M;const dataAge=now-new Date(r.time).getTime();const isStale=dataAge>STALE_MS;
     const distNTUCHText=distNTUCH>1000?`${(distNTUCH/1000).toFixed(1)} km`:`${Math.round(distNTUCH)} m`;
     timeEl2.textContent=`最後更新：${formatTWTime(r.time)}`;
     let phase='in';
@@ -952,7 +1066,7 @@ async function updateLocationDisplay(){
       const destLat=phase==='outbound'?currentDestLat:NTUCH_LAT;const destLng=phase==='outbound'?currentDestLng:NTUCH_LNG;
       const etaDestLabel=phase==='outbound'?(currentDestName||'目的醫院'):'台大兒童醫院';const isReturn=phase==='returning';
       const eta=await fetchDeviceETA(r.lat,r.lng,destLat,destLng);
-      if(eta){etaEl.innerHTML=`<div style="padding:14px 16px 12px;background:${isReturn?'var(--warn-light)':'var(--accent-light)'};border-bottom:1px solid var(--bg);text-align:center;"><div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:${isReturn?'var(--warn)':'var(--accent)'};margin-bottom:6px;opacity:0.8;">${isReturn?'↩ 回程中':'↗ 出勤中'}</div><div style="font-family:var(--mono);font-size:32px;font-weight:300;color:${isReturn?'var(--warn)':'var(--accent)'};line-height:1;margin-bottom:5px;">約 ${eta.mins} <span style="font-size:14px;">分鐘</span></div><div style="font-size:11px;font-family:var(--mono);color:var(--text-muted);">預計 ${eta.arrivalStr} 抵達 ${etaDestLabel}</div></div>`;}
+      if(eta){etaEl.innerHTML=`<div style="padding:16px 20px;background:${isReturn?'var(--warn-light)':'var(--accent-light)'};border-bottom:1px solid var(--surface2);text-align:center;"><div style="font-size:11px;text-transform:uppercase;letter-spacing:0.15em;color:${isReturn?'var(--warn)':'var(--accent)'};margin-bottom:8px;font-weight:500;">${isReturn?'↩ 回程中':'↗ 出勤中'}</div><div style="font-family:var(--mono);font-size:36px;font-weight:400;color:${isReturn?'var(--warn)':'var(--accent)'};line-height:1;margin-bottom:8px;">約 ${eta.mins} <span style="font-size:16px;">分鐘</span></div><div style="font-size:13px;font-family:var(--sans);color:var(--text-muted);">預計 ${eta.arrivalStr} 抵達 ${etaDestLabel}</div></div>`;}
       else{etaEl.innerHTML='';}
     }else{etaEl.innerHTML='';}
     const newMapURL=buildDeviceStaticMapURL(r,phase);
@@ -973,32 +1087,29 @@ const _origShowResult = showResult;
 window.showResult = async function(name) {
   _origShowResult(name);
   const hosp = DB[name];
-  // 取得縣市：有 DB 紀錄用 DB，否則靠 geocoder 反推
   if (hosp) {
     currentDestName = name; currentDestCounty = hosp.county || '台北市';
     DEVICES.forEach((_,i)=>{deviceDwellState[i].arrivedAt=null;deviceDwellState[i].confirmedDwell=false;});
     const mapContainer = document.getElementById('map-container');
-    mapContainer.style.height = '380px';
-    mapContainer.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;line-height:380px;">地圖載入中…</div>';
+    mapContainer.style.height = '260px';
+    mapContainer.innerHTML = '<div style="color:var(--text-muted);font-size:14px;padding:20px;text-align:center;line-height:260px;">地圖載入中…</div>';
     document.getElementById('travel-time-badge').style.display = 'none';
     try {
       const coords = await geocodeHospital(name, currentDestCounty);
       if (coords) {
         currentDestLat = coords.lat; currentDestLng = coords.lng;
         loadMapsAPI(); if (window.google) renderMap();
-      } else { mapContainer.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;line-height:380px;">地圖服務異常</div>'; }
-    } catch(e) { mapContainer.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;line-height:380px;">地圖服務異常</div>'; }
+      } else { mapContainer.innerHTML = '<div style="color:var(--text-muted);font-size:14px;padding:20px;text-align:center;line-height:260px;">地圖服務異常</div>'; }
+    } catch(e) { mapContainer.innerHTML = '<div style="color:var(--text-muted);font-size:14px;padding:20px;text-align:center;line-height:260px;">地圖服務異常</div>'; }
     fetchWeather(currentDestCounty);
   } else {
-    // 首次出勤院所：靠 geocoder 取得座標與縣市
     currentDestName = name;
     DEVICES.forEach((_,i)=>{deviceDwellState[i].arrivedAt=null;deviceDwellState[i].confirmedDwell=false;});
     const mapContainer = document.getElementById('map-container');
-    mapContainer.style.height = '380px';
-    mapContainer.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;line-height:380px;">地圖載入中…</div>';
+    mapContainer.style.height = '260px';
+    mapContainer.innerHTML = '<div style="color:var(--text-muted);font-size:14px;padding:20px;text-align:center;line-height:260px;">地圖載入中…</div>';
     document.getElementById('travel-time-badge').style.display = 'none';
     loadMapsAPI();
-    // 等 Maps API 就緒後 geocode
     const doGeocode = async () => {
       if (!window.google || !window.google.maps || !window.google.maps.Geocoder) {
         setTimeout(doGeocode, 500); return;
@@ -1007,12 +1118,11 @@ window.showResult = async function(name) {
         const geocoder = new google.maps.Geocoder();
         geocoder.geocode({ address: name + ' 台灣', region: 'TW' }, async (results, status) => {
           if (status !== 'OK' || !results[0]) {
-            mapContainer.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;line-height:380px;">地圖服務異常</div>';
+            mapContainer.innerHTML = '<div style="color:var(--text-muted);font-size:14px;padding:20px;text-align:center;line-height:260px;">地圖服務異常</div>';
             return;
           }
           const loc = results[0].geometry.location;
           currentDestLat = loc.lat(); currentDestLng = loc.lng();
-          // 從 address_components 推縣市
           let county = '';
           for (const c of (results[0].address_components || [])) {
             if (c.types.includes('administrative_area_level_1')) {
@@ -1026,7 +1136,7 @@ window.showResult = async function(name) {
           if (EAST_COUNTIES.includes(currentDestCounty)) showSuhuaPanel(currentDestCounty);
         });
       } catch(e) {
-        mapContainer.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;line-height:380px;">地圖服務異常</div>';
+        mapContainer.innerHTML = '<div style="color:var(--text-muted);font-size:14px;padding:20px;text-align:center;line-height:260px;">地圖服務異常</div>';
       }
     };
     doGeocode();
@@ -1049,18 +1159,14 @@ async function loadHospitalData() {
     const s = data.stats || {};
     const el = id => document.getElementById(id);
     if (el('stat-missions'))  el('stat-missions').textContent  = s.total_missions  ?? '—';
-    
-    // 增加這段綁定外接與轉出的數字
     if (el('stat-missions-breakdown')) {
       const outCount = s.outbound_missions ?? '—';
       const transCount = s.transfer_missions ?? '—';
       el('stat-missions-breakdown').textContent = `外接: ${outCount} | 轉出: ${transCount}`;
     }
-
     if (el('stat-hospitals')) el('stat-hospitals').textContent = s.total_hospitals ?? '—';
     if (el('stat-counties'))  el('stat-counties').textContent  = s.total_counties  ?? '—';
     if (el('stat-years'))     el('stat-years').textContent     = s.years_span      ?? '—';
-    if (el('stat-last-date')) el('stat-last-date').textContent = s.last_outbound_date || '—';
 
     if (banner) banner.style.display = 'none';
     console.log(`[hospital] 載入完成：${ALL_NAMES.length} 家醫院`);
@@ -1070,7 +1176,7 @@ async function loadHospitalData() {
   }
 }
 
-// ══ 載入 NHI 院所名單（作為首次出勤的備援搜尋）══
+// ══ 載入 NHI 院所名單 ══
 async function loadNHIHospitals() {
   try {
     const res  = await fetch('https://t1190t.github.io/ntuch-transport/hospitals.csv');
@@ -1093,7 +1199,6 @@ document.addEventListener('DOMContentLoaded', () => {
   loadMapsAPI();
   startLiveUpdates();
 
-  // 先載入醫院資料庫，載入完成後再載入 NHI 備援名單，再檢查網址參數
   loadHospitalData().then(async () => {
     await loadNHIHospitals();
     const params = new URLSearchParams(window.location.search);
