@@ -852,7 +852,7 @@ const SHEETS_ID    = '1y5oMPbBTpqIYuDQqlZbz8hkUS4mvrVwFeAEAc64KXgo';
 const NTUCH_LAT    = 25.0426;
 const NTUCH_LNG    = 121.5184;
 const NTUCH_RADIUS_M = 900;
-const DEST_RADIUS_M  = 600;
+const DEST_RADIUS_M  = 1000;
 
 const DEVICES = [
   { id: '51579轉診手機', label: '51579轉診手機' },
@@ -1056,7 +1056,7 @@ async function updateLocationDisplay(){
     else{
       const distToDest=haversine(r.lat,r.lng,currentDestLat,currentDestLng);
       if(distToDest<DEST_RADIUS_M){phase='at_dest';if(!dwell.arrivedAt)dwell.arrivedAt=now;if(!dwell.confirmedDwell&&(now-dwell.arrivedAt)>=DWELL_MS)dwell.confirmedDwell=true;}
-      else{if(dwell.confirmedDwell){phase='returning';}else{dwell.arrivedAt=null;phase='outbound';}}
+      else{if(dwell.confirmedDwell){phase='returning';}else if(dwell.arrivedAt){phase='outbound';}else{dwell.arrivedAt=null;phase='outbound';}}
     }
     let statusClass,statusText;
     if(isStale){statusClass='stale';statusText='逾時';}
