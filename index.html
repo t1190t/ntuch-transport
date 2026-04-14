@@ -752,6 +752,44 @@ function toggleSuhuaBody(forceOpen) {
   }
 }
 
+async function fetchEqForSuhuaPanel() {
+  try {
+    const res  = await fetch(`https://opendata.cwa.gov.tw/api/v1/rest/datastore/E-A0015-001?Authorization=${CWA_API_KEY}&limit=30`);
+    const data = await res.json();
+    const quakes = data?.records?.Earthquake || [];
+    const now = Date.now();
+    const h72 = 72 * 3600 * 1000;
+    const result = [];
+    for (const q of quakes) {
+      const info = q.EarthquakeInfo || {};
+      const t = new Date(info.OriginTime || 0).getTime();
+      if (now - t > h72) continue;
+      const areas = q.Intensity?.ShakingArea || [];
+      const lvl = (name) => {
+        const a = areas.find(x => x.AreaDesc === name);
+        try { return parseInt((a?.AreaIntensity || '0').replace('級','')) || 0; } catch { return 0; }
+      };
+      const yi = lvl('宜蘭縣'), hu = lvl('花蓮縣'), ta = lvl('台東縣');
+      if (Math.max(yi, hu, ta) < 2) continue;
+      const epi = info.Epicenter || {};
+      result.push({
+        time:          new Date(info.OriginTime).toLocaleString('zh-TW',{timeZone:'Asia/Taipei',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}),
+        location:      epi.Location || '不明',
+        magnitude:     info.EarthquakeMagnitude?.MagnitudeValue || info.Magnitude?.MagnitudeValue || 0,
+        depth:         info.FocalDepth || 0,
+        yilan_level:   String(yi),
+        hualien_level: String(hu),
+        taitung_level: String(ta),
+        report_url:    q.Web || '',
+      });
+    }
+    return result;
+  } catch(e) {
+    console.error('[地震前端]', e);
+    return [];
+  }
+}
+
 async function loadSuhuaData() {
   const loading = document.getElementById('suhua-loading');
   const content = document.getElementById('suhua-content');
@@ -760,9 +798,13 @@ async function loadSuhuaData() {
   loading.style.display = 'flex'; content.style.display = 'none';
   error.style.display = 'none';   footer.style.display  = 'none';
   try {
-    const res  = await fetch(`${SUHUA_BACKEND}/api/dashboard-data`);
+    const [res, eqInfo] = await Promise.all([
+      fetch(`${SUHUA_BACKEND}/api/dashboard-data`),
+      fetchEqForSuhuaPanel()
+    ]);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
+    data.earthquakeInfo = eqInfo;   // 用前端直接抓的地震資料覆蓋後端的
     renderSuhuaContent(data);
     suhuaDataLoaded = true;
     document.getElementById('suhua-update-time').textContent = `資料時間：${data.lastUpdate}`;
