@@ -197,6 +197,13 @@
   .phone-number { font-family: var(--mono); font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 3px; word-break: break-all; }
   .phone-contact { font-size: 13px; color: var(--text-muted); }
   .phone-unit { font-size: 11px; background: var(--tag-bg); padding: 2px 8px; border-radius: 4px; color: var(--text-muted); font-family: var(--mono); font-weight: 500; white-space: nowrap; align-self: flex-start; margin-top: 1px; }
+  .transfer-badge { display: inline-block; margin-top: 5px; font-size: 11px; background: var(--info-light); color: var(--info); padding: 2px 8px; border-radius: 4px; font-family: var(--mono); font-weight: 500; letter-spacing: 0.02em; }
+  .records-toggle-btn { background: var(--surface); border: 1.5px solid var(--border); border-radius: 8px; padding: 4px 12px; font-size: 12px; font-family: var(--sans); color: var(--text-muted); cursor: pointer; white-space: nowrap; transition: all 0.2s; display: flex; align-items: center; gap: 5px; }
+  .records-toggle-btn:hover { border-color: var(--text); color: var(--text); background: var(--surface2); }
+  .records-toggle-chevron { font-style: normal; font-size: 10px; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: inline-block; }
+  .records-toggle-chevron.collapsed { transform: rotate(180deg); }
+  .phone-list-wrap { overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+  .phone-list-wrap.collapsed { max-height: 0 !important; }
   
   /* 空白狀態 */
   .empty-state { text-align: center; padding: 60px 24px; color: var(--text-muted); background: transparent; border: 2px dashed var(--border); box-shadow: none; }
@@ -654,15 +661,21 @@ function showResult(name) {
   const eastWarn = isEast ? `<span class="tag warn">⚠ 東部任務</span>` : '';
   const units    = [...new Set(hosp.records.map(r => r.unit).filter(Boolean))];
   const unitTags = units.slice(0,4).map(u => `<span class="tag">${u}</span>`).join('');
-  const phoneHTML = hosp.records.map(r => `
+  const phoneHTML = hosp.records.map(r => {
+    const transferBadge = r.type === 'transfer'
+      ? `<span class="transfer-badge">🔄 此為轉出任務</span>`
+      : '';
+    return `
     <div class="phone-record">
       <div class="phone-date">${r.date}</div>
       <div class="phone-details">
         <div class="phone-number">${r.phone || '—'}</div>
         <div class="phone-contact">${r.contact || '—'}</div>
+        ${transferBadge}
       </div>
       <div class="phone-unit">${r.unit || '—'}</div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   const t = TIME_DB[name];
   let timeStatsHTML = '';
@@ -709,13 +722,35 @@ function showResult(name) {
       <div class="card" style="grid-column: 1 / -1;">
         <div class="card-header">
           <div class="card-title">最近出勤紀錄（近 ${hosp.records.length} 筆）</div>
+          <button class="records-toggle-btn" id="records-toggle-btn" onclick="toggleRecordsList()">
+            <span id="records-toggle-label">收起</span>
+            <i class="records-toggle-chevron" id="records-toggle-chevron">▲</i>
+          </button>
         </div>
-        <div class="phone-list">${phoneHTML}</div>
+        <div class="phone-list-wrap" id="records-list-wrap" style="max-height:${hosp.records.length * 100}px;">
+          <div class="phone-list">${phoneHTML}</div>
+        </div>
       </div>
     </div>`;
 
   if (isEast) showSuhuaPanel(hosp.county);
   else hideSuhuaPanel();
+}
+
+function toggleRecordsList() {
+  const wrap    = document.getElementById('records-list-wrap');
+  const label   = document.getElementById('records-toggle-label');
+  const chevron = document.getElementById('records-toggle-chevron');
+  if (!wrap) return;
+  if (wrap.classList.contains('collapsed')) {
+    wrap.classList.remove('collapsed');
+    label.textContent = '收起';
+    chevron.classList.remove('collapsed');
+  } else {
+    wrap.classList.add('collapsed');
+    label.textContent = '展開';
+    chevron.classList.add('collapsed');
+  }
 }
 
 // ══ 蘇花路況面板 ══
