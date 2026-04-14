@@ -766,7 +766,7 @@ async function fetchEqForSuhuaPanel() {
       if (now - t > h72) continue;
       const areas = q.Intensity?.ShakingArea || [];
       const lvl = (name) => {
-        const a = areas.find(x => x.AreaDesc === name);
+          const a = areas.find(x => x.AreaDesc && x.AreaDesc.includes(name));
         try { return parseInt((a?.AreaIntensity || '0').replace('級','')) || 0; } catch { return 0; }
       };
       const yi = lvl('宜蘭縣'), hu = lvl('花蓮縣'), ta = lvl('台東縣');
