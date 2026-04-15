@@ -679,7 +679,7 @@ function calculateETA(hospitalName) {
       if (status === 'OK' && response.rows[0].elements[0].status === 'OK') {
         const mins = Math.round(response.rows[0].elements[0].duration.value / 60);
         currentEtaText = `約 ${mins} 分鐘`;
-        etaEl.textContent = `🚗 台大兒童 → 目的地：${currentEtaText}`;
+        etaEl.textContent = `🚗 台大兒醫 → 目的地：${currentEtaText}`;
       } else {
         badge.classList.remove('show');
         currentEtaText = '';
